@@ -24,8 +24,8 @@
 *  AUTHOR:        Blake 'PROTODOME' Troise Killar
 ************************************************************H*/
 
-#ifndef BUZZER_DRIVER_H
-#define BUZZER_DRIVER_H
+#ifndef BUZZER_DRIVER_HPP
+#define BUZZER_DRIVER_HPP
 
 // stuff you can mess with
 #define OUTPUT         0    // the PORTB hardware output pin

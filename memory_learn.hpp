@@ -1,5 +1,5 @@
-#ifndef MEMORY_LEARN_H
-#define MEMORY_LEARN_H
+#ifndef MEMORY_LEARN_HPP
+#define MEMORY_LEARN_HPP
 
 /*
  * Memorylearn PIN Layout:
@@ -9,6 +9,9 @@
  * 8 => Buzzer PIN
  * 9 => Adafruit Neopixel RGB LED
  */
+
+#define LCD_PIN 4
+#define LEDS_PIN 9
 
 #include "buzzer_driver.hpp"
 
