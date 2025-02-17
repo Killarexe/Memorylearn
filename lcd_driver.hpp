@@ -76,15 +76,6 @@
 #define FAST_DELAY 80
 #define SLOW_DELAY 2000 // Used for Returning home and Clearing the display
 
-#define LCD_FLAGS_SHIFT_RIGHT 1
-#define LCD_FLAGS_SHIFT_DISPLAY 2
-#define LCD_FLAGS_BACKLIGHT 4
-#define LCD_FLAGS_CURSOR_BLINKING 8
-#define LCD_FLAGS_DISPLAY_ENABLE 16
-#define LCD_FLAGS_DISPLAY_SHIFT 32
-#define LCD_FLAGS_CURSOR_ENABLE 64
-#define LCD_FLAGS_CURSOR_DIRECTION 128
-
 /*
  * LCD flags:
  * 0bDCSOBLPR
@@ -97,6 +88,15 @@
  *   |+------- Cursor ON
  *   +-------- Cursor direction
  */
+#define LCD_FLAGS_SHIFT_RIGHT 1
+#define LCD_FLAGS_SHIFT_DISPLAY 2
+#define LCD_FLAGS_BACKLIGHT 4
+#define LCD_FLAGS_CURSOR_BLINKING 8
+#define LCD_FLAGS_DISPLAY_ENABLE 16
+#define LCD_FLAGS_DISPLAY_SHIFT 32
+#define LCD_FLAGS_CURSOR_ENABLE 64
+#define LCD_FLAGS_CURSOR_DIRECTION 128
+
 typedef struct LCD {
   uint8_t address;
   uint8_t sda_pin;
@@ -104,6 +104,8 @@ typedef struct LCD {
   uint8_t i2c_type;
   uint8_t flags;
 } LCD;
+
+void lcd_write_byte(LCD* lcd, uint8_t value);
 
 void lcd_toggle_enable(LCD* lcd, uint8_t value, const uint64_t delay_us);
 
@@ -124,5 +126,7 @@ void lcd_set_flags(LCD* lcd, uint8_t flags);
 void lcd_shift_display(LCD* lcd, bool direction, uint8_t amount);
 
 void lcd_shift_cursor(LCD* lcd, bool direction, uint8_t amount);
+
+void lcd_create_char(uint8_t location, uint8_t* data);
 
 #endif

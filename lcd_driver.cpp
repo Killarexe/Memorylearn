@@ -4,8 +4,8 @@ void lcd_write_byte(LCD* lcd, uint8_t value) {
   i2c_write_blocking(lcd->i2c_type == 1 ? i2c1 : i2c0, lcd->address, &value, 1, false);
 }
 
-void lcd_toggle_enable(LCD *lcd, uint8_t value, const int delay_us) {
-  sleep_us(delay_us);!
+void lcd_toggle_enable(LCD *lcd, uint8_t value, const uint64_t delay_us) {
+  sleep_us(delay_us);
   lcd_write_byte(lcd, value | LCD_ENABLE_PIN);
   sleep_us(delay_us);
   lcd_write_byte(lcd, value & ~LCD_ENABLE_PIN);
@@ -106,5 +106,13 @@ void lcd_shift_cursor(LCD *lcd, bool direction, uint8_t amount) {
   }
   while (amount--) {
     lcd_send_byte(lcd, LCD_ENTRYMODESET, LCD_COMMAND_MODE, FAST_DELAY);
+  }
+}
+
+void lcd_create_char(uint8_t location, uint8_t* data) {
+  location &= 0x7;
+  lcd_send_byte(lcd, LCD_SETCGRAMADDR | (location << 3), LCD_COMMAND_MODE, FAST_DELAY);
+  for (uint8_t i = 0; i < 8; i++) {
+    lcd_write_byte(lcd, data[i]);
   }
 }
