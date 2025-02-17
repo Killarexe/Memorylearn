@@ -1,4 +1,5 @@
 #include "memory_learn.hpp"
+#include "lcd_chars.hpp"
 #include "pico/stdlib.h"
 #include "hardware/timer.h"
 
@@ -10,6 +11,10 @@ bool buzzer_update_callback(struct repeating_timer* timer) {
 void init_memory_learn(MemoryLearn *memory_learn) {
   memory_learn->state = MemoryLearnState::BOOT;
   lcd_init(&memory_learn->lcd, 0xFF, LCD_SDA_PIN, LCD_SCL_PIN, i2c0);
+  lcd_create_char(0, TOP_LEFT_ARROW);
+  lcd_create_char(1, BOTTOM_LEFT_ARROW);
+  lcd_create_char(2, TOP_RIGHT_ARROW);
+  lcd_create_char(3, BOTTOM_RIGHT_ARROW);
 
   for (uint8_t i = 0; i < 8; i++) {
     gpio_init(BUTTONS_PINS[i]);
