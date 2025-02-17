@@ -10,10 +10,15 @@
  * 9 => Adafruit Neopixel RGB LED
  */
 
-#define LCD_PIN 4
+#include "buzzer_driver.hpp"
+#include "lcd_driver.hpp"
+
+#define BUZZER_PIN 8
+#define LCD_SDA_PIN 4
+#define LCD_SCL_PIN 5
 #define LEDS_PIN 9
 
-#include "buzzer_driver.hpp"
+static const unsigned int BUTTONS_PINS[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 typedef enum MemoryLearnState {
   BOOT,
@@ -23,6 +28,12 @@ typedef enum MemoryLearnState {
 typedef struct MemoryLearn {
   MemoryLearnState state;
   BuzzerDriver buzzer;
+  LCD lcd;
+  uint8_t buttons;
 } MemoryLearn;
+
+void init_memory_learn(MemoryLearn* memory_learn);
+
+void update_memory_learn(MemoryLearn* memory_learn);
 
 #endif

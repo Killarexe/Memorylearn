@@ -24,12 +24,10 @@
 *  AUTHOR:        Blake 'PROTODOME' Troise Killar
 ************************************************************H*/
 #include "buzzer_driver.hpp"
-
-#include <avr/io.h>         // core avr functionality
-#include <avr/pgmspace.h>
+#include <pico/stdlib.h>
 
 // note table (plus an initial 'wasted' entry for rests)
-const unsigned int note[13] PROGMEM =
+const unsigned int NOTES[13] =
 {
 	// the rest command is technically note 0 and thus requires a frequency
 	255,
@@ -38,13 +36,13 @@ const unsigned int note[13] PROGMEM =
 };
 
 // location of individual samples in sample array
-const unsigned char sample_index[6] PROGMEM =
+const unsigned char SAMPLE_INDICIES[6] =
 {
 	0,19,34,74,118,126
 };
 
 // raw PWM sample data
-const unsigned char sample[SAMPLE_LENGTH] PROGMEM =
+const unsigned char SAMPLES[SAMPLE_LENGTH] =
 {
 	// bwoop (0)
 	0b10101010,0b10110110,0b10000111,0b11111000,
@@ -112,7 +110,8 @@ void init_buzzer_driver(BuzzerDriver* driver) {
   }
 
   // initialise output pin
-	DDRB = 0b00000001 << OUTPUT;  // == pinMode(8, OUTPUT);
+  gpio_init(driver->output_pin);
+  gpio_set_dir(driver->output_pin, GPIO_OUT);
 }
 
 void play_buzzer_driver(BuzzerDriver* driver, unsigned char* music_data) {
@@ -136,8 +135,8 @@ void play_buzzer_driver(BuzzerDriver* driver, unsigned char* music_data) {
 	 * tune notes (due to timing errors) until every channel is assigned frequency data.
 	 * Additionally, default values are set should no volume or octave be specified */
 	for (unsigned char i = 0; i < CHANNELS; i++) {
-		driver->data_pointer[i] = pgm_read_byte(&music_data[i * 2]) << 8;
-		driver->data_pointer[i] = driver->data_pointer[i] | pgm_read_byte(&music_data[i * 2 + 1]);
+		driver->data_pointer[i] = music_data[i * 2] << 8;
+		driver->data_pointer[i] = driver->data_pointer[i] | music_data[i * 2 + 1];
 		driver->frequency[i] = 255; // random frequency (won't ever be sounded)
 		driver->volume[i] = 1;      // default volume : 50% pulse wave
 		driver->octave[i] = 3;      // default octave : o3
@@ -145,191 +144,176 @@ void play_buzzer_driver(BuzzerDriver* driver, unsigned char* music_data) {
 }
 
 void update_buzzer_driver(BuzzerDriver* driver) {
-  if (driver->music_data == nullptr) {
+  if (!driver->music_data) {
     return;
   }
 
-	/* The code below lowers the volume of the sample channel when the volume is changed,
-	 * but slows the routine by a tone... Not desired right now, but could be interesting in
-	 * future.
-	 *
-	 * if(volume[3] > 2)
-	 * 	PORTB = 0;
-	 */
-	/**********************
-	 *  Synthesizer Code  *
-	 **********************/
-	// sampler (channel D) code
-	if (driver->sample_counter-- == 0) {
-		if (driver->current_byte < driver->current_sample - 1) {
-			// read individual bits from the sample array
-			driver->out[3] = ((pgm_read_byte(&sample[driver->current_byte]) >> driver->current_bit++) & 1) << OUTPUT;
-		} else {
-			/* Waste the same number of clock cycles as it takes to process the above to
-			 * prevent the pitch from changing when the sampler isn't playing. */
-			for (unsigned char i = 0; i < 8; i++) {
-				asm("nop;nop;");
+  /* The code below lowers the volume of the sample channel when the volume is changed,
+   * but slows the routine by a tone... Not desired right now, but could be interesting in
+   * future.
+   *
+   * if(volume[3] > 2)
+   *  PORTB = 0;
+   */
+  /**********************
+   *  Synthesizer Code  *
+   **********************/
+  // sampler (channel D) code
+  if (driver->sample_counter-- == 0) {
+    if (driver->current_byte < driver->current_sample - 1) {
+      // read individual bits from the sample array
+      driver->out[3] = ((SAMPLES[driver->current_byte] >> driver->current_bit++) & 1) << OUTPUT;
+    } else {
+      /* Waste the same number of clock cycles as it takes to process the above to
+       * prevent the pitch from changing when the sampler isn't playing. */
+      for (unsigned char i = 0; i < 8; i++) {
+        asm("nop;nop;");
       }
-			// silence the channel when the sample is over
-			driver->out[3] = 0;
-		}
-		// move to the next byte on bit pointer overflow
-		if(driver->current_bit > 7) {
-			driver->current_byte++;
-			driver->current_bit = 0;
-		}
-		driver->sample_counter = SAMPLE_SPEED;
-	}
+      // silence the channel when the sample is over
+      driver->out[3] = 0;
+    }
+    // move to the next byte on bit pointer overflow
+    if(driver->current_bit > 7) {
+      driver->current_byte++;
+      driver->current_bit = 0;
+    }
+    driver->sample_counter = SAMPLE_SPEED;
+  }
 
-	/* Port changes (the demarcated 'output' commands) are carefully interleaved with
-	 * generation code to balance volume of outputs. */
-	// channel A (pulse 0 code)
-	PORTB = driver->out[0]; //output A (0)
-	driver->pitch_counter[0] += driver->octave[0];
-	if (driver->pitch_counter[0] >= driver->frequency[0])
+  /* Port changes (the demarcated 'output' commands) are carefully interleaved with
+   * generation code to balance volume of outputs. */
+  // channel A (pulse 0 code)
+  gpio_set_dir(driver->output_pin, driver->out[0]);
+  driver->pitch_counter[0] += driver->octave[0];
+  if (driver->pitch_counter[0] >= driver->frequency[0])
     driver->pitch_counter[0] = driver->pitch_counter[0] - driver->frequency[0];
-	if (driver->pitch_counter[0] <= driver->waveform[0])
-		driver->out[0] = 1 << OUTPUT;
-	PORTB = driver->out[1]; //output B (1)
-	if (driver->pitch_counter[0] >= driver->waveform[0])
-		driver->out[0] = 0;
-	// channel B (pulse 1 code)
-	driver->pitch_counter[1] += driver->octave[1];
-	if (driver->pitch_counter[1] >= driver->frequency[1])
-		driver->pitch_counter[1] = driver->pitch_counter[1] - driver->frequency[1];
-	PORTB = driver->out[2]; //output C (2)
-	if (driver->pitch_counter[1] <= driver->waveform[1])
-		driver->out[1] = 1 << OUTPUT;
-	if (driver->pitch_counter[1] >= driver->waveform[1])
-		driver->out[1] = 0;
-	// channel C (pulse 2 code)
-	driver->pitch_counter[2] += driver->octave[2];
-	if (driver->pitch_counter[2] >= driver->frequency[2])
-		driver->pitch_counter[2] = driver->pitch_counter[2] - driver->frequency[2];
-	PORTB = driver->out[3]; //output D (3)
-	if (driver->pitch_counter[2] <= driver->waveform[2])
-		driver->out[2] = 1 << OUTPUT;
-	if (driver->pitch_counter[2] >= driver->waveform[2])
-		driver->out[2] = 0;
+  if (driver->pitch_counter[0] <= driver->waveform[0])
+    driver->out[0] = 1 << OUTPUT;
+  gpio_set_dir(driver->output_pin, driver->out[1]);
+  if (driver->pitch_counter[0] >= driver->waveform[0])
+    driver->out[0] = 0;
+  // channel B (pulse 1 code)
+  driver->pitch_counter[1] += driver->octave[1];
+  if (driver->pitch_counter[1] >= driver->frequency[1])
+    driver->pitch_counter[1] = driver->pitch_counter[1] - driver->frequency[1];
+  gpio_set_dir(driver->output_pin, driver->out[2]);
+  if (driver->pitch_counter[1] <= driver->waveform[1])
+    driver->out[1] = 1 << OUTPUT;
+  if (driver->pitch_counter[1] >= driver->waveform[1])
+    driver->out[1] = 0;
+  // channel C (pulse 2 code)
+  driver->pitch_counter[2] += driver->octave[2];
+  if (driver->pitch_counter[2] >= driver->frequency[2])
+    driver->pitch_counter[2] = driver->pitch_counter[2] - driver->frequency[2];
+  gpio_set_dir(driver->output_pin, driver->out[3]);
+  if (driver->pitch_counter[2] <= driver->waveform[2])
+    driver->out[2] = 1 << OUTPUT;
+  if (driver->pitch_counter[2] >= driver->waveform[2])
+    driver->out[2] = 0;
   
-	/**************************
-	 *  Data Processing Code  *
-	 **************************/
-	if (driver->tick_counter-- == 0) {
-		// Variable tempo, sets the fastest / smallest possible clock event.
-		driver->tick_counter = driver->tick_speed;
-		for (unsigned char voice = 0; voice < CHANNELS; voice++) {
-			// If the note ended, start processing the next byte of data.
-			if (driver->length[voice] == 0) {
-				LOOP: // Yup, a goto, I know.
-				// Temporary storage of data for quick processing.
-				// first nibble of data
-				driver->buffer1 = (pgm_read_byte(&driver->music_data[driver->data_pointer[voice]]) >> 4) & 15;
-				// second nibble of data
-				driver->buffer2 = pgm_read_byte(&driver->music_data[driver->data_pointer[voice]]) & 15;
-				if (driver->buffer1 == 15) {
-					// Another buffer for commands that require an additional byte.
-					driver->buffer3 = pgm_read_byte(&driver->music_data[driver->data_pointer[voice] + 1]);
-					// loop start
-					if (driver->buffer2 == 0) {
-						driver->loops_active[voice]++;
-						driver->loop_point[driver->loops_active[voice] - 1][voice] = driver->data_pointer[voice] + 2;
-						driver->loop_duration[driver->loops_active[voice] - 1][voice] = driver->buffer3 - 1;
-						driver->data_pointer[voice]+= 2;
-					} else if (driver->buffer2 == 1) {
-            // loop end
-						/* If we reach the end of the loop and the duration isn't zero,
-						 * decrement our counter and start again. */
-						if (driver->loop_duration[driver->loops_active[voice] - 1][voice] > 0) {
-							driver->data_pointer[voice] = driver->loop_point[driver->loops_active[voice] - 1 ][voice];
-							driver->loop_duration[driver->loops_active[voice] - 1][voice]--;
-						} else {
-              // If we're done, move away from the loop.
-							driver->loops_active[voice]--;
-							driver->data_pointer[voice]++;
-						}
-					} else if (driver->buffer2 == 2) {
-            // macro
-						driver->pointer_location[voice] = driver->data_pointer[voice] + 2;
-						driver->data_pointer[voice] = pgm_read_byte(&driver->music_data[(driver->buffer3 + CHANNELS) * 2]) << 8;
-						driver->data_pointer[voice] = driver->data_pointer[voice] | pgm_read_byte(&driver->music_data[(driver->buffer3 + CHANNELS) * 2 + 1]);
-					} else if (driver->buffer2 == 3) {
-            // tempo
-						driver->tick_speed = driver->buffer3 << 5;
-						driver->data_pointer[voice] += 2;
-					} else if (driver->buffer2 == 4) {
-            // transpose (currently unused)
-						driver->data_pointer[voice] += 2; // skip data
-          } else if (driver->buffer2 == 5) {
-            // instrument (currently unused)
-						driver->data_pointer[voice] += 2; // skip data
-          } else if (driver->buffer2 == 6) {
-            // tie command (currently unused)
-						driver->data_pointer[voice]++; // skip data
-          } else if (driver->buffer2 == 15) {
-						// If we've got a previous position saved, go to it...
-						if (driver->pointer_location[voice] != 0) {
-							driver->data_pointer[voice] = driver->pointer_location[voice];
-							driver->pointer_location[voice] = 0;
-						} else {
-              // ...If not, go back to the start.
-							driver->data_pointer[voice] = pgm_read_byte(&driver->music_data[voice * 2]) << 8;
-							driver->data_pointer[voice] = driver->data_pointer[voice] | pgm_read_byte(&driver->music_data[voice * 2 + 1]);
-						}
-					}
-					/* For any command that should happen 'instantaneously' (e.g. anything
-					 * that isn't a note or rest - in mmml notes can't be altered once
-					 * they've started playing), we need to keep checking this loop until we
-					 * find an event that requires waiting. */
-					goto LOOP;
-				}
-				if (driver->buffer1 == 13 || driver->buffer1 == 14) {
-					// octave
-					if (driver->buffer1 == 13) {
-						driver->octave[voice] = 1 << driver->buffer2;
+  /**************************
+   *  Data Processing Code  *
+   **************************/
+  if (driver->tick_counter-- == 0) {
+    // Variable tempo, sets the fastest / smallest possible clock event.
+    driver->tick_counter = driver->tick_speed;
+    for (unsigned char voice = 0; voice < CHANNELS; voice++) {
+      // If the note ended, start processing the next byte of data.
+      if (driver->length[voice] == 0) {
+        LOOP: // Yup, a goto, I know.
+        // Temporary storage of data for quick processing.
+        // first nibble of data
+        driver->buffer1 = (driver->music_data[driver->data_pointer[voice]] >> 4) & 15;
+        // second nibble of data
+        driver->buffer2 = driver->music_data[driver->data_pointer[voice]] & 15;
+        
+        if (driver->buffer1 == 15) {
+          // Another buffer for commands that require an additional byte.
+          driver->buffer3 =driver->music_data[driver->data_pointer[voice] + 1];
+          
+          switch (driver->buffer2) {
+            case 0: // loop start
+              driver->loops_active[voice]++;
+              driver->loop_point[driver->loops_active[voice] - 1][voice] = driver->data_pointer[voice] + 2;
+              driver->loop_duration[driver->loops_active[voice] - 1][voice] = driver->buffer3 - 1;
+              driver->data_pointer[voice] += 2;
+              break;
+              
+            case 1: // loop end
+              if (driver->loop_duration[driver->loops_active[voice] - 1][voice] > 0) {
+                driver->data_pointer[voice] = driver->loop_point[driver->loops_active[voice] - 1][voice];
+                driver->loop_duration[driver->loops_active[voice] - 1][voice]--;
+              } else {
+                driver->loops_active[voice]--;
+                driver->data_pointer[voice]++;
+              }
+              break;
+              
+            case 2: // macro
+              driver->pointer_location[voice] = driver->data_pointer[voice] + 2;
+              driver->data_pointer[voice] = driver->music_data[(driver->buffer3 + CHANNELS) * 2] << 8;
+              driver->data_pointer[voice] = driver->data_pointer[voice] | driver->music_data[(driver->buffer3 + CHANNELS) * 2 + 1];
+              break;
+              
+            case 3: // tempo
+              driver->tick_speed = driver->buffer3 << 5;
+              driver->data_pointer[voice] += 2;
+              break;
+              
+            case 15:
+              if (driver->pointer_location[voice] != 0) {
+                driver->data_pointer[voice] = driver->pointer_location[voice];
+                driver->pointer_location[voice] = 0;
+              } else {
+                driver->data_pointer[voice] = driver->music_data[voice * 2] << 8;
+                driver->data_pointer[voice] = driver->data_pointer[voice] | driver->music_data[voice * 2 + 1];
+              }
+              break;
           }
-					// volume
-					if (driver->buffer1 == 14) {
-						driver->volume[voice] = driver->buffer2;
-          }
-					driver->data_pointer[voice]++;
-					goto LOOP; //see comment above previous GOTO
-				}
-				// note value
-				if (driver->buffer1 != 0 && driver->buffer1 < 14) {
-					if (voice < 3) {
-						driver->buffer4 = pgm_read_word(&note[driver->buffer1]);
-						driver->frequency[voice] = driver->buffer4;
-						/* Calculate the waveform duty cycle by dividing the frequency by
-						 * powers of two. */
-						driver->waveform[voice] = driver->buffer4 >> driver->volume[voice];
-					} else {
-						// reset the sampler
-						driver->current_bit = 0;
-						driver->current_byte = pgm_read_byte(&sample_index[driver->buffer1 - 1]);
-						driver->current_sample = pgm_read_byte(&sample_index[driver->buffer1]);
-					}
-				} else {
-          // rest
-					driver->waveform[voice] = 0;
+          goto LOOP;
         }
 
-				// note duration value
-				if (driver->buffer2 < 8) {
-					// standard duration
-					driver->length[voice] = 127 >> driver->buffer2;
-        } else {
-					// dotted (1 + 1/2) duration
-					driver->length[voice] = 95 >> (driver->buffer2 & 7);
+        switch (driver->buffer1) {
+          case 13: // octave
+            driver->octave[voice] = 1 << driver->buffer2;
+            driver->data_pointer[voice]++;
+            goto LOOP;
+            
+          case 14: // volume
+            driver->volume[voice] = driver->buffer2;
+            driver->data_pointer[voice]++;
+            goto LOOP;
+            
+          default:
+            if (driver->buffer1 != 0 && driver->buffer1 < 14) {
+              if (voice < 3) {
+                driver->buffer4 = NOTES[driver->buffer1];
+                driver->frequency[voice] = driver->buffer4;
+                driver->waveform[voice] = driver->buffer4 >> driver->volume[voice];
+              } else {
+                driver->current_bit = 0;
+                driver->current_byte = SAMPLE_INDICIES[driver->buffer1 - 1];
+                driver->current_sample = SAMPLE_INDICIES[driver->buffer1];
+              }
+            } else {
+              driver->waveform[voice] = 0;
+            }
         }
-				// next element in data
-				driver->data_pointer[voice]++;
-			} else {
+
+        // note duration value
+        if (driver->buffer2 < 8) {
+          driver->length[voice] = 127 >> driver->buffer2;
+        } else {
+          driver->length[voice] = 95 >> (driver->buffer2 & 7);
+        }
+        // next element in data
+        driver->data_pointer[voice]++;
+      } else {
         // keep waiting until the note is over
-				driver->length[voice]--;
+        driver->length[voice]--;
       }
-		}
-	}
+    }
+  }
 }
 
 void stop_buzzer_driver(BuzzerDriver* driver) {
