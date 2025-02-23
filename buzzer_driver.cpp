@@ -183,33 +183,44 @@ void update_buzzer_driver(BuzzerDriver* driver) {
   /* Port changes (the demarcated 'output' commands) are carefully interleaved with
    * generation code to balance volume of outputs. */
   // channel A (pulse 0 code)
-  gpio_set_dir(driver->output_pin, driver->out[0]);
+  gpio_put(driver->output_pin, driver->out[0]);
   driver->pitch_counter[0] += driver->octave[0];
-  if (driver->pitch_counter[0] >= driver->frequency[0])
+  if (driver->pitch_counter[0] >= driver->frequency[0]) {
     driver->pitch_counter[0] = driver->pitch_counter[0] - driver->frequency[0];
-  if (driver->pitch_counter[0] <= driver->waveform[0])
+  }
+  if (driver->pitch_counter[0] <= driver->waveform[0]) {
     driver->out[0] = 1 << OUTPUT;
-  gpio_set_dir(driver->output_pin, driver->out[1]);
-  if (driver->pitch_counter[0] >= driver->waveform[0])
+  }
+
+  gpio_put(driver->output_pin, driver->out[1]);
+  if (driver->pitch_counter[0] >= driver->waveform[0]) {
     driver->out[0] = 0;
+  }
   // channel B (pulse 1 code)
   driver->pitch_counter[1] += driver->octave[1];
-  if (driver->pitch_counter[1] >= driver->frequency[1])
+  if (driver->pitch_counter[1] >= driver->frequency[1]) {
     driver->pitch_counter[1] = driver->pitch_counter[1] - driver->frequency[1];
-  gpio_set_dir(driver->output_pin, driver->out[2]);
-  if (driver->pitch_counter[1] <= driver->waveform[1])
+  }
+  gpio_put(driver->output_pin, driver->out[2]);
+  if (driver->pitch_counter[1] <= driver->waveform[1]) {
     driver->out[1] = 1 << OUTPUT;
-  if (driver->pitch_counter[1] >= driver->waveform[1])
+  }
+  if (driver->pitch_counter[1] >= driver->waveform[1]) {
     driver->out[1] = 0;
+  }
+
   // channel C (pulse 2 code)
   driver->pitch_counter[2] += driver->octave[2];
-  if (driver->pitch_counter[2] >= driver->frequency[2])
+  if (driver->pitch_counter[2] >= driver->frequency[2]) {
     driver->pitch_counter[2] = driver->pitch_counter[2] - driver->frequency[2];
-  gpio_set_dir(driver->output_pin, driver->out[3]);
-  if (driver->pitch_counter[2] <= driver->waveform[2])
+  }
+  gpio_put(driver->output_pin, driver->out[3]);
+  if (driver->pitch_counter[2] <= driver->waveform[2]) {
     driver->out[2] = 1 << OUTPUT;
-  if (driver->pitch_counter[2] >= driver->waveform[2])
+  }
+  if (driver->pitch_counter[2] >= driver->waveform[2]) {
     driver->out[2] = 0;
+  }
   
   /**************************
    *  Data Processing Code  *
