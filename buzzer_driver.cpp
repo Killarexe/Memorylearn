@@ -114,7 +114,7 @@ void init_buzzer_driver(BuzzerDriver* driver) {
   gpio_set_dir(driver->output_pin, GPIO_OUT);
 }
 
-void play_buzzer_driver(BuzzerDriver* driver, unsigned char* music_data) {
+void play_buzzer_driver(BuzzerDriver* driver, const unsigned char* music_data) {
   driver->current_byte = 0;
   driver->current_bit = 0;
   driver->sample_counter = 0;
@@ -162,7 +162,7 @@ void update_buzzer_driver(BuzzerDriver* driver) {
   if (driver->sample_counter-- == 0) {
     if (driver->current_byte < driver->current_sample - 1) {
       // read individual bits from the sample array
-      driver->out[3] = ((SAMPLES[driver->current_byte] >> driver->current_bit++) & 1) << OUTPUT;
+      driver->out[3] = ((SAMPLES[driver->current_byte] >> driver->current_bit++) & 1);
     } else {
       /* Waste the same number of clock cycles as it takes to process the above to
        * prevent the pitch from changing when the sampler isn't playing. */
@@ -189,7 +189,7 @@ void update_buzzer_driver(BuzzerDriver* driver) {
     driver->pitch_counter[0] = driver->pitch_counter[0] - driver->frequency[0];
   }
   if (driver->pitch_counter[0] <= driver->waveform[0]) {
-    driver->out[0] = 1 << OUTPUT;
+    driver->out[0] = 1;
   }
 
   gpio_put(driver->output_pin, driver->out[1]);
@@ -203,7 +203,7 @@ void update_buzzer_driver(BuzzerDriver* driver) {
   }
   gpio_put(driver->output_pin, driver->out[2]);
   if (driver->pitch_counter[1] <= driver->waveform[1]) {
-    driver->out[1] = 1 << OUTPUT;
+    driver->out[1] = 1;
   }
   if (driver->pitch_counter[1] >= driver->waveform[1]) {
     driver->out[1] = 0;
@@ -216,7 +216,7 @@ void update_buzzer_driver(BuzzerDriver* driver) {
   }
   gpio_put(driver->output_pin, driver->out[3]);
   if (driver->pitch_counter[2] <= driver->waveform[2]) {
-    driver->out[2] = 1 << OUTPUT;
+    driver->out[2] = 1;
   }
   if (driver->pitch_counter[2] >= driver->waveform[2]) {
     driver->out[2] = 0;

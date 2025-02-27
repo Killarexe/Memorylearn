@@ -1,10 +1,11 @@
 #include "memory_learn.hpp"
 
-int main(void) {
-  MemoryLearn memory_learn;
-  init_memory_learn(&memory_learn);
-  
-  while (1) {
-    update_memory_learn(&memory_learn);
-  }
+MemoryLearn memory_learn;
+
+void setup() {
+  memory_learn_init(&memory_learn);
+}
+
+void loop() {
+  memory_learn_update(&memory_learn);
 }

@@ -73,7 +73,7 @@
 #define MAX_CHARS 16
 
 /* Delay values in microseconds, check page 24 */
-#define FAST_DELAY 80
+#define FAST_DELAY 600
 #define SLOW_DELAY 2000 // Used for Returning home and Clearing the display
 
 /*
@@ -127,6 +127,6 @@ void lcd_shift_display(LCD* lcd, bool direction, uint8_t amount);
 
 void lcd_shift_cursor(LCD* lcd, bool direction, uint8_t amount);
 
-void lcd_create_char(uint8_t location, uint8_t* data);
+void lcd_create_char(LCD* lcd, uint8_t location, uint8_t* data);
 
 #endif

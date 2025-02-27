@@ -1,7 +1,9 @@
 #include "lcd_driver.hpp"
 
 void lcd_write_byte(LCD* lcd, uint8_t value) {
-  i2c_write_blocking(lcd->i2c_type == 1 ? i2c1 : i2c0, lcd->address, &value, 1, false);
+  #ifdef i2c_default
+    i2c_write_blocking(lcd->i2c_type == 1 ? i2c1 : i2c0, lcd->address, &value, 1, false);
+  #endif
 }
 
 void lcd_toggle_enable(LCD *lcd, uint8_t value, const uint64_t delay_us) {
@@ -29,7 +31,9 @@ void lcd_send_byte(LCD *lcd, uint8_t value, uint8_t mode, uint64_t delay_us) {
     }
   }
 
+  lcd_write_byte(lcd, high);
   lcd_toggle_enable(lcd, high, delay_us);
+  lcd_write_byte(lcd, low);
   lcd_toggle_enable(lcd, low, delay_us);
 }
 
@@ -39,6 +43,8 @@ void lcd_init(LCD *lcd, uint8_t address, uint8_t sda_pin, uint8_t scl_pin, i2c_i
   gpio_set_function(scl_pin, GPIO_FUNC_I2C);
   gpio_pull_up(sda_pin);
   gpio_pull_up(scl_pin);
+
+  //bi_decl(bi_2pins_with_func(sda_pin, scl_pin, GPIO_FUNC_I2C));
 
   lcd->address = (address == 0xFF) ? 0x27 : address;
   lcd->i2c_type = (i2c_inst == i2c1);
@@ -109,7 +115,7 @@ void lcd_shift_cursor(LCD *lcd, bool direction, uint8_t amount) {
   }
 }
 
-void lcd_create_char(uint8_t location, uint8_t* data) {
+void lcd_create_char(LCD* lcd, uint8_t location, uint8_t* data) {
   location &= 0x7;
   lcd_send_byte(lcd, LCD_SETCGRAMADDR | (location << 3), LCD_COMMAND_MODE, FAST_DELAY);
   for (uint8_t i = 0; i < 8; i++) {

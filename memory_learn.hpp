@@ -12,28 +12,53 @@
 
 #include "buzzer_driver.hpp"
 #include "lcd_driver.hpp"
+#include "adafruit_neopixel.hpp"
 
 #define BUZZER_PIN 8
-#define LCD_SDA_PIN 4
-#define LCD_SCL_PIN 5
 #define LEDS_PIN 9
+
+#define BUTTON_1 1
+#define BUTTON_2 2
+#define BUTTON_3 4
+#define BUTTON_4 8
+#define BUTTON_5 16
+#define BUTTON_6 32
+#define BUTTON_7 64
+#define BUTTON_8 128
 
 static const unsigned int BUTTONS_PINS[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
+//TODO: Find names for the games...
 typedef enum MemoryLearnState {
   BOOT,
   SELECT_GAME,
+  SIMON,
+  LED_REACT,
+  MEMORY_LED,
+  COLOR_LED,
+  BLUETOOTH
 } MemoryLearnState;
 
+typedef struct SelectGame {
+  uint8_t cursor_index;
+} SelectGame;
+
 typedef struct MemoryLearn {
+  uint8_t buttons;
   MemoryLearnState state;
+
+  SelectGame select_game;
+
+
+  Adafruit_NeoPixel* leds;
   BuzzerDriver buzzer;
   LCD lcd;
-  uint8_t buttons;
 } MemoryLearn;
 
-void init_memory_learn(MemoryLearn* memory_learn);
+void memory_learn_set_state(MemoryLearn* memory_learn, MemoryLearnState state);
 
-void update_memory_learn(MemoryLearn* memory_learn);
+void memory_learn_init(MemoryLearn* memory_learn);
+
+void memory_learn_update(MemoryLearn* memory_learn);
 
 #endif

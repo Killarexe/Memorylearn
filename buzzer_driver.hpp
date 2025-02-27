@@ -27,9 +27,6 @@
 #ifndef BUZZER_DRIVER_HPP
 #define BUZZER_DRIVER_HPP
 
-// stuff you can mess with
-#define OUTPUT         0    // the PORTB hardware output pin
-
 // stuff you shouldn't really mess with
 #define CHANNELS       4    // the number of channels
 #define SAMPLE_SPEED   5    // the sampler playback rate
@@ -70,12 +67,12 @@ typedef struct BuzzerDriver {
 
   unsigned int output_pin;
 
-  unsigned char* music_data;
+  const unsigned char* music_data;
 } BuzzerDriver;
 
 void init_buzzer_driver(BuzzerDriver* driver);
 
-void play_buzzer_driver(BuzzerDriver* driver, unsigned char* music_data);
+void play_buzzer_driver(BuzzerDriver* driver, const unsigned char* music_data);
 
 void update_buzzer_driver(BuzzerDriver* driver);
 
