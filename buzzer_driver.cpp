@@ -24,7 +24,6 @@
 *  AUTHOR:        Blake 'PROTODOME' Troise Killar
 ************************************************************H*/
 #include "buzzer_driver.hpp"
-#include <pico/stdlib.h>
 
 // note table (plus an initial 'wasted' entry for rests)
 const unsigned int NOTES[13] =
@@ -110,8 +109,7 @@ void init_buzzer_driver(BuzzerDriver* driver) {
   }
 
   // initialise output pin
-  gpio_init(driver->output_pin);
-  gpio_set_dir(driver->output_pin, GPIO_OUT);
+  pinMode(driver->output_pin, OUTPUT);
 }
 
 void play_buzzer_driver(BuzzerDriver* driver, const unsigned char* music_data) {
@@ -183,7 +181,7 @@ void update_buzzer_driver(BuzzerDriver* driver) {
   /* Port changes (the demarcated 'output' commands) are carefully interleaved with
    * generation code to balance volume of outputs. */
   // channel A (pulse 0 code)
-  gpio_put(driver->output_pin, driver->out[0]);
+  digitalWrite(driver->output_pin, driver->out[0]);
   driver->pitch_counter[0] += driver->octave[0];
   if (driver->pitch_counter[0] >= driver->frequency[0]) {
     driver->pitch_counter[0] = driver->pitch_counter[0] - driver->frequency[0];
@@ -192,7 +190,7 @@ void update_buzzer_driver(BuzzerDriver* driver) {
     driver->out[0] = 1;
   }
 
-  gpio_put(driver->output_pin, driver->out[1]);
+  digitalWrite(driver->output_pin, driver->out[1]);
   if (driver->pitch_counter[0] >= driver->waveform[0]) {
     driver->out[0] = 0;
   }
@@ -201,7 +199,7 @@ void update_buzzer_driver(BuzzerDriver* driver) {
   if (driver->pitch_counter[1] >= driver->frequency[1]) {
     driver->pitch_counter[1] = driver->pitch_counter[1] - driver->frequency[1];
   }
-  gpio_put(driver->output_pin, driver->out[2]);
+  digitalWrite(driver->output_pin, driver->out[2]);
   if (driver->pitch_counter[1] <= driver->waveform[1]) {
     driver->out[1] = 1;
   }
@@ -214,7 +212,7 @@ void update_buzzer_driver(BuzzerDriver* driver) {
   if (driver->pitch_counter[2] >= driver->frequency[2]) {
     driver->pitch_counter[2] = driver->pitch_counter[2] - driver->frequency[2];
   }
-  gpio_put(driver->output_pin, driver->out[3]);
+  digitalWrite(driver->output_pin, driver->out[3]);
   if (driver->pitch_counter[2] <= driver->waveform[2]) {
     driver->out[2] = 1;
   }

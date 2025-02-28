@@ -1,6 +1,5 @@
 #include "memory_learn.hpp"
 #include "lcd_chars.hpp"
-#include "pico/stdlib.h"
 #include "hardware/timer.h"
 
 bool buzzer_update_callback(struct repeating_timer* timer) {
@@ -9,20 +8,24 @@ bool buzzer_update_callback(struct repeating_timer* timer) {
 }
 
 void memory_learn_boot(MemoryLearn* memory_learn) {
-  lcd_init(&memory_learn->lcd, 0x27, PICO_DEFAULT_I2C_SDA_PIN, PICO_DEFAULT_I2C_SCL_PIN, i2c0);
-  lcd_create_char(&memory_learn->lcd, 0, TOP_LEFT_ARROW);
-  lcd_create_char(&memory_learn->lcd, 1, BOTTOM_LEFT_ARROW);
-  lcd_create_char(&memory_learn->lcd, 2, TOP_RIGHT_ARROW);
-  lcd_create_char(&memory_learn->lcd, 3, BOTTOM_RIGHT_ARROW);
-  lcd_print(&memory_learn->lcd, "Hello, world!");
+  if (memory_learn->lcd == 0) {
+    memory_learn->lcd = new LiquidCrystal_I2C();
+  }
+  memory_learn->lcd->begin();
+  memory_learn->lcd->backlight();
+  memory_learn->lcd->createChar(0, TOP_LEFT_ARROW);
+  memory_learn->lcd->createChar(1, BOTTOM_LEFT_ARROW);
+  memory_learn->lcd->createChar(2, TOP_RIGHT_ARROW);
+  memory_learn->lcd->createChar(3, BOTTOM_RIGHT_ARROW);
+  memory_learn->lcd->clear();
+  memory_learn->lcd->print("Hello, world!");
   if (memory_learn->leds == 0) {
     memory_learn->leds = new Adafruit_NeoPixel(8, LEDS_PIN, NEO_GRB + NEO_KHZ800);
   }
   memory_learn->leds->clear();
 
   for (uint8_t i = 0; i < 8; i++) {
-    gpio_init(BUTTONS_PINS[i]);
-    gpio_set_dir(BUTTONS_PINS[i], GPIO_IN);
+    pinMode(BUTTONS_PINS[i], INPUT);
   }
 
   init_buzzer_driver(&memory_learn->buzzer);
@@ -47,7 +50,7 @@ void memory_learn_init(MemoryLearn *memory_learn) {
 void update_buttons(MemoryLearn* memory_learn) {
   memory_learn->buttons = 0;
   for (uint8_t i = 0; i > 8; i++) {
-    memory_learn->buttons |= gpio_get(BUTTONS_PINS[i]);
+    memory_learn->buttons |= digitalRead(BUTTONS_PINS[i]) << i;
   }
 }
 

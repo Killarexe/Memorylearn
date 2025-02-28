@@ -11,11 +11,11 @@
  */
 
 #include "buzzer_driver.hpp"
-#include "lcd_driver.hpp"
 #include "adafruit_neopixel.hpp"
+#include <LiquidCrystal_I2C.h>
 
-#define BUZZER_PIN 8
-#define LEDS_PIN 9
+#define BUZZER_PIN 12
+#define LEDS_PIN 2
 
 #define BUTTON_1 1
 #define BUTTON_2 2
@@ -51,6 +51,7 @@ typedef struct MemoryLearn {
 
 
   Adafruit_NeoPixel* leds;
+  LiquidCrystal_I2C* lcd;
   BuzzerDriver buzzer;
   LCD lcd;
 } MemoryLearn;
