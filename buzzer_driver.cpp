@@ -24,6 +24,7 @@
 *  AUTHOR:        Blake 'PROTODOME' Troise Killar
 ************************************************************H*/
 #include "buzzer_driver.hpp"
+#include <Arduino.h>
 
 // note table (plus an initial 'wasted' entry for rests)
 const unsigned int NOTES[13] =
@@ -129,16 +130,24 @@ void play_buzzer_driver(BuzzerDriver* driver, const unsigned char* music_data) {
   driver->music_data = music_data;
 
   /* Set each channel's data pointer to that channel's data location in the core data array.
-	 * Initialise each channel's frequencies. By default they're set to zero which causes out of
-	 * tune notes (due to timing errors) until every channel is assigned frequency data.
-	 * Additionally, default values are set should no volume or octave be specified */
-	for (unsigned char i = 0; i < CHANNELS; i++) {
-		driver->data_pointer[i] = music_data[i * 2] << 8;
-		driver->data_pointer[i] = driver->data_pointer[i] | music_data[i * 2 + 1];
-		driver->frequency[i] = 255; // random frequency (won't ever be sounded)
-		driver->volume[i] = 1;      // default volume : 50% pulse wave
-		driver->octave[i] = 3;      // default octave : o3
-	}
+   * Initialise each channel's frequencies. By default they're set to zero which causes out of
+   * tune notes (due to timing errors) until every channel is assigned frequency data.
+   * Additionally, default values are set should no volume or octave be specified
+   */
+  for (unsigned char i = 0; i < CHANNELS; i++) {
+    driver->data_pointer[i] = music_data[i * 2] << 8;
+    driver->data_pointer[i] = driver->data_pointer[i] | music_data[i * 2 + 1];
+    driver->frequency[i] = 255; // random frequency (won't ever be sounded)
+    driver->volume[i] = 1;      // default volume : 50% pulse wave
+    driver->octave[i] = 3;      // default octave : o3
+  }
+}
+
+void tone_buzzer_driver(BuzzerDriver* driver, unsigned int frequency, unsigned long duration) {
+  if (driver->music_data) {
+    driver->music_data = NULL;
+  }
+  tone(driver->output_pin, frequency, duration);
 }
 
 void update_buzzer_driver(BuzzerDriver* driver) {
@@ -268,6 +277,10 @@ void update_buzzer_driver(BuzzerDriver* driver) {
               driver->tick_speed = driver->buffer3 << 5;
               driver->data_pointer[voice] += 2;
               break;
+            
+            case 6: //Tie command
+              driver->music_data = NULL;
+              return;
               
             case 15:
               if (driver->pointer_location[voice] != 0) {

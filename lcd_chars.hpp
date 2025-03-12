@@ -1,6 +1,10 @@
 #ifndef LCD_CHARS_HPP
 #define LCD_CHARS_HPP
 
+/*
+ * Ici se trouve tout les charatères ajoutée au LCD
+ */
+
 static unsigned char TOP_LEFT_ARROW[8] = {
   0b00000000,
   0b00000000,
@@ -43,6 +47,17 @@ static unsigned char BOTTOM_RIGHT_ARROW[8] = {
   0b00000000,
   0b00000000,
   0b00000000
+};
+
+static unsigned char ERROR_ICON[8] = {
+  0b00011000,
+  0b00100100,
+  0b00100100,
+  0b01011010,
+  0b01011010,
+  0b10000001,
+  0b10011001,
+  0b01111110
 };
 
 #endif

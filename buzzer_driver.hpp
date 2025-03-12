@@ -50,19 +50,19 @@ typedef struct BuzzerDriver {
   unsigned int pointer_location[CHANNELS];
 
   // sampler variables
-	unsigned char current_byte;
+  unsigned char current_byte;
   unsigned char current_bit;
   unsigned char sample_counter;
   unsigned char current_sample;
 
 	// temporary data storage variables
-	unsigned char buffer1;
+  unsigned char buffer1;
   unsigned char buffer2;
   unsigned char buffer3;
-	unsigned int buffer4;
+  unsigned int buffer4;
 
-	// main timer variables
-	unsigned int tick_counter;
+  // main timer variables
+  unsigned int tick_counter;
   unsigned int tick_speed; //tempo
 
   unsigned int output_pin;
@@ -73,6 +73,8 @@ typedef struct BuzzerDriver {
 void init_buzzer_driver(BuzzerDriver* driver);
 
 void play_buzzer_driver(BuzzerDriver* driver, const unsigned char* music_data);
+
+void tone_buzzer_driver(BuzzerDriver* driver, unsigned int frequency, unsigned long duration);
 
 void update_buzzer_driver(BuzzerDriver* driver);
 

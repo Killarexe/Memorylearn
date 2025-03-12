@@ -1,3 +1,4 @@
+#include "esp32-hal-timer.h"
 #ifndef MEMORY_LEARN_HPP
 #define MEMORY_LEARN_HPP
 
@@ -11,8 +12,12 @@
  */
 
 #include "buzzer_driver.hpp"
-#include "adafruit_neopixel.hpp"
-#include <LiquidCrystal_I2C.h>
+#include <Adafruit_NeoPixel.h>
+#include <rgb_lcd.h>
+
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
 
 #define BUZZER_PIN 12
 #define LEDS_PIN 2
@@ -36,24 +41,38 @@ typedef enum MemoryLearnState {
   LED_REACT,
   MEMORY_LED,
   COLOR_LED,
-  BLUETOOTH
+  ABOUT
 } MemoryLearnState;
 
 typedef struct SelectGame {
   uint8_t cursor_index;
 } SelectGame;
 
+typedef struct SimonGame {
+  uint8_t level;
+  uint8_t state;
+} SimonGame;
+
 typedef struct MemoryLearn {
+  //General variables
   uint8_t buttons;
   MemoryLearnState state;
 
+  //Jeux/Menus
   SelectGame select_game;
+  SimonGame simon_game;
 
-
+  //Hardware Managers
   Adafruit_NeoPixel* leds;
-  LiquidCrystal_I2C* lcd;
+  rgb_lcd lcd;
+  hw_timer_t* buzzer_timer;
   BuzzerDriver buzzer;
-  LCD lcd;
+
+  //Bluetooth variables
+  BLEServer* ble_server;
+  BLEService* ble_service;
+  BLEAdvertising ble_advertising;
+  BLECharacteristic* best_score;  //Pour tester
 } MemoryLearn;
 
 void memory_learn_set_state(MemoryLearn* memory_learn, MemoryLearnState state);
