@@ -31,7 +31,12 @@
 #define BUTTON_7 64
 #define BUTTON_8 128
 
-static const unsigned int BUTTONS_PINS[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+#define BUTTON_LEFT BUTTON_1
+#define BUTTON_RIGHT BUTTON_2
+#define BUTTON_OK BUTTON_3
+#define BUTTON_NO BUTTON_4
+
+static const unsigned int BUTTONS_PINS[8] = {3, 4, 5, 6, 7, 8, 9, 10};
 
 //TODO: Find names for the games...
 typedef enum MemoryLearnState {
@@ -51,7 +56,34 @@ typedef struct SelectGame {
 typedef struct SimonGame {
   uint8_t level;
   uint8_t state;
+  uint8_t* buttons;
+  uint8_t button_index;
+  uint16_t max_reaction_time;
+  BLECharacteristic* best_score; //TODO: Later
 } SimonGame;
+
+typedef struct LEDReact {
+  uint8_t level;
+  uint16_t reaction_time;
+  uint16_t max_reaction_time;
+  uint8_t state;
+  BLECharacteristic* best_score;
+  BLECharacteristic* best_reaction_time;
+} LEDReact;
+
+typedef struct MemoryLED {
+  uint8_t level;
+  uint8_t state;
+  uint16_t max_reaction_time;
+  BLECharacteristic* best_score; //TODO: Later
+} MemoryLED;
+
+typedef struct ColorLED {
+  uint8_t level;
+  uint8_t state;
+  uint16_t max_reaction_time;
+  BLECharacteristic* best_score; //TODO: Later
+} ColorLED;
 
 typedef struct MemoryLearn {
   //General variables
@@ -61,6 +93,9 @@ typedef struct MemoryLearn {
   //Jeux/Menus
   SelectGame select_game;
   SimonGame simon_game;
+  LEDReact led_react;
+  MemoryLED memory_led;
+  ColorLED color_led;
 
   //Hardware Managers
   Adafruit_NeoPixel* leds;
@@ -74,6 +109,8 @@ typedef struct MemoryLearn {
   BLEAdvertising ble_advertising;
   BLECharacteristic* best_score;  //Pour tester
 } MemoryLearn;
+
+void memory_learn_error(MemoryLearn* memory_learn, const char* error_message);
 
 void memory_learn_set_state(MemoryLearn* memory_learn, MemoryLearnState state);
 

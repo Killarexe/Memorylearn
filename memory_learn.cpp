@@ -66,7 +66,7 @@ void memory_learn_error(MemoryLearn* memory_learn, const char* error_message) {
   memory_learn->lcd.print("\5     Error    \5");
   memory_learn->lcd.setCursor(0, 1);
   memory_learn->lcd.print(error_message);
-  while (memory_learn->buttons) {
+  while (!memory_learn->buttons) {
     update_buttons(memory_learn);
   }
   ESP.restart();
