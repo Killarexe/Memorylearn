@@ -86,11 +86,12 @@ const unsigned char SAMPLES[SAMPLE_LENGTH] =
 };
 
 
-void init_buzzer_driver(BuzzerDriver* driver) {
+void init_buzzer_driver(BuzzerDriver* driver, unsigned char pin) {
   driver->current_byte = 0;
   driver->current_bit = 0;
   driver->sample_counter = 0;
   driver->current_sample = 0;
+  driver->output_pin = pin;
 
   driver->buffer1 = 0;
   driver->buffer2 = 0;
@@ -190,7 +191,6 @@ void update_buzzer_driver(BuzzerDriver* driver) {
   /* Port changes (the demarcated 'output' commands) are carefully interleaved with
    * generation code to balance volume of outputs. */
   // channel A (pulse 0 code)
-  digitalWrite(driver->output_pin, driver->out[0]);
   driver->pitch_counter[0] += driver->octave[0];
   if (driver->pitch_counter[0] >= driver->frequency[0]) {
     driver->pitch_counter[0] = driver->pitch_counter[0] - driver->frequency[0];
@@ -199,7 +199,6 @@ void update_buzzer_driver(BuzzerDriver* driver) {
     driver->out[0] = 1;
   }
 
-  digitalWrite(driver->output_pin, driver->out[1]);
   if (driver->pitch_counter[0] >= driver->waveform[0]) {
     driver->out[0] = 0;
   }
@@ -208,7 +207,6 @@ void update_buzzer_driver(BuzzerDriver* driver) {
   if (driver->pitch_counter[1] >= driver->frequency[1]) {
     driver->pitch_counter[1] = driver->pitch_counter[1] - driver->frequency[1];
   }
-  digitalWrite(driver->output_pin, driver->out[2]);
   if (driver->pitch_counter[1] <= driver->waveform[1]) {
     driver->out[1] = 1;
   }
@@ -221,7 +219,6 @@ void update_buzzer_driver(BuzzerDriver* driver) {
   if (driver->pitch_counter[2] >= driver->frequency[2]) {
     driver->pitch_counter[2] = driver->pitch_counter[2] - driver->frequency[2];
   }
-  digitalWrite(driver->output_pin, driver->out[3]);
   if (driver->pitch_counter[2] <= driver->waveform[2]) {
     driver->out[2] = 1;
   }
@@ -279,9 +276,14 @@ void update_buzzer_driver(BuzzerDriver* driver) {
               break;
             
             case 6: //Tie command
-              driver->music_data = NULL;
-              return;
+              driver->data_pointer[voice]++;
+              break;
               
+            case 4:
+            case 5:
+              driver->data_pointer[voice] += 2;
+              break;
+
             case 15:
               if (driver->pointer_location[voice] != 0) {
                 driver->data_pointer[voice] = driver->pointer_location[voice];
@@ -324,7 +326,7 @@ void update_buzzer_driver(BuzzerDriver* driver) {
 
         // note duration value
         if (driver->buffer2 < 8) {
-          driver->length[voice] = 127 >> driver->buffer2;
+          driver->length[voice] = 0x7F >> driver->buffer2;
         } else {
           driver->length[voice] = 95 >> (driver->buffer2 & 7);
         }
@@ -336,8 +338,11 @@ void update_buzzer_driver(BuzzerDriver* driver) {
       }
     }
   }
+
+  uint8_t output = driver->out[0] | driver->out[1] | driver->out[2] | driver->out[3];
+  digitalWrite(driver->output_pin, output);
 }
 
 void stop_buzzer_driver(BuzzerDriver* driver) {
-  init_buzzer_driver(driver);
+  init_buzzer_driver(driver, driver->output_pin);
 }

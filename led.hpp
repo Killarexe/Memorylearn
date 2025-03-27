@@ -1,3 +1,6 @@
+/* led.hpp
+ * Music d'exemple pour le driver.
+ */
 #ifndef LED_HPP
 #define LED_HPP
 

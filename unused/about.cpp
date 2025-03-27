@@ -1,5 +1,6 @@
 #include "about.hpp"
 
+// Affiche des infos sur le MemoryLearn
 void about_init(MemoryLearn* memory_learn) {
   memory_learn->lcd.clear();
   memory_learn->lcd.setCursor(0, 0);
@@ -9,7 +10,9 @@ void about_init(MemoryLearn* memory_learn) {
 }
 
 void about_update(MemoryLearn* memory_learn) {
-  if (memory_learn->buttons & BUTTON_2) {
+  // Vérifie si le bouton OK ou NON et appuyé.
+  if (memory_learn->buttons & (BUTTON_OK | BUTTON_NO)) {
+    // Retourne dans le menu de sélécton
     memory_learn_set_state(memory_learn, MemoryLearnState::SELECT_GAME);
   }
 }

@@ -1,3 +1,6 @@
+/* bluetooth_manager.hpp
+ * Definie les foncitions pour la partie bluetooth du MemoryLearn.
+ */
 #ifndef BLUETOOTH_MANAGER_HPP
 #define BLUETOOTH_MANAGER_HPP
 
@@ -8,6 +11,10 @@
 
 #include "memory_learn.hpp"
 
+/**
+ * Initialize le bluetooth du MemoryLearn
+ * @param MemoryLearn* memory_learn
+ */
 void bluetooth_start(MemoryLearn* memory_learn);
 
 #endif

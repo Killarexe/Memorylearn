@@ -1,7 +1,7 @@
 /*H************************************************************
 *  FILENAME:      buzzer_driver.hpp
 *  DESCRIPTION:   Micro Music Macro Language (μMML) Player for
-*                 AVR microcontrollers.
+*                 microcontrollers.
 *
 *  NOTES:         To be compiled with AVR C.
 *
@@ -23,6 +23,14 @@
 *
 *  AUTHOR:        Blake 'PROTODOME' Troise Killar
 ************************************************************H*/
+
+/*
+ * Details: ce code definit les fonciton et la structure pour le driver du buzzer.
+ *  Ce driver permet d'utiliser un buzzer monotone tritone avec possiblité de jouer
+ *  des echantillons. J'ai modifié pour que le code soit structuré et compatible avec
+ *  l'ESP32. Le code d'origine se trouve ici:
+ *  https://github.com/protodomemusic/mmml/blob/master/player-avr/mmml-avr-player.c
+ */
 
 #ifndef BUZZER_DRIVER_HPP
 #define BUZZER_DRIVER_HPP
@@ -70,14 +78,39 @@ typedef struct BuzzerDriver {
   const unsigned char* music_data;
 } BuzzerDriver;
 
-void init_buzzer_driver(BuzzerDriver* driver);
+/**
+ * Initalize le driver.
+ * @param BuzzerDriver* driver
+ * @param unsigned char pin
+ */
+void init_buzzer_driver(BuzzerDriver* driver, unsigned char pin);
 
+/**
+ * Met la musique pour le driver.
+ * @param BuzzerDriver* driver
+ * @param const unsigned char* music_data La musique
+ */
 void play_buzzer_driver(BuzzerDriver* driver, const unsigned char* music_data);
 
+/**
+ * Fait un bruit au buzzer.
+ * Annule la musique si active et ne met pas le programe en attente selon la duration.
+ * @param BuzzerDriver* driver
+ * @param unsigned int frequency La frequance du bruit.
+ * @param unsigned long duration
+ */
 void tone_buzzer_driver(BuzzerDriver* driver, unsigned int frequency, unsigned long duration);
 
+/**
+ * Met a jour le driver et calcule selon les données de la musique donnée pour savoir si il faut faire du son ou non.
+ * Doit être appellée tout les 0.1ms environ pour le bon fonctionnement.
+ * @param 
+ */
 void update_buzzer_driver(BuzzerDriver* driver);
 
+/**
+ * Stop la musique si elle est jouée par le driver.
+ */
 void stop_buzzer_driver(BuzzerDriver* driver);
 
 #endif

@@ -1,3 +1,6 @@
+/* lcd_chars.hpp
+ * Ici se trouve les graphiques pour les charatères customs.
+ */
 #ifndef LCD_CHARS_HPP
 #define LCD_CHARS_HPP
 
@@ -49,15 +52,26 @@ static unsigned char BOTTOM_RIGHT_ARROW[8] = {
   0b00000000
 };
 
-static unsigned char ERROR_ICON[8] = {
-  0b00011000,
-  0b00100100,
-  0b00100100,
-  0b01011010,
-  0b01011010,
-  0b10000001,
-  0b10011001,
-  0b01111110
+static unsigned char ERROR_ICON_LEFT[8] = {
+  0b00000001,
+  0b00000010,
+  0b00000010,
+  0b00000101,
+  0b00000101,
+  0b00001000,
+  0b00001001,
+  0b00000111
+};
+
+static unsigned char ERROR_ICON_RIGHT[8] = {
+  0b0010000,
+  0b0001000,
+  0b0001000,
+  0b0010100,
+  0b0010100,
+  0b0000010,
+  0b0010010,
+  0b0011100
 };
 
 #endif

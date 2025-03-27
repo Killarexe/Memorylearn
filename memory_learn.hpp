@@ -1,27 +1,26 @@
-#include "esp32-hal-timer.h"
+/* memory_learn.hpp
+ *
+ * Defintion de toutes les fonctions, structures de base et des jeux du MemoryLearn.
+ */
+
 #ifndef MEMORY_LEARN_HPP
 #define MEMORY_LEARN_HPP
-
-/*
- * Memorylearn PIN Layout:
- * A0-A5, 2, 3 => Buttons
- * 4, 5 => LCD Screen
- * 6, 7 => Bluetooth device
- * 8 => Buzzer PIN
- * 9 => Adafruit Neopixel RGB LED
- */
 
 #include "buzzer_driver.hpp"
 #include <Adafruit_NeoPixel.h>
 #include <rgb_lcd.h>
 
-#include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLEServer.h>
+//#include <BLEDevice.h>
+//#include <BLEUtils.h>
+//#include <BLEServer.h>
 
-#define BUZZER_PIN 12
-#define LEDS_PIN 2
+#include "esp32-hal-timer.h"
 
+
+/*
+ * Les états des boutons sont mis tous sur un octet.
+ * Ceci defitie les positions des boutons sur l'octet.
+ */
 #define BUTTON_1 1
 #define BUTTON_2 2
 #define BUTTON_3 4
@@ -31,14 +30,18 @@
 #define BUTTON_7 64
 #define BUTTON_8 128
 
-#define BUTTON_LEFT BUTTON_1
-#define BUTTON_RIGHT BUTTON_2
-#define BUTTON_OK BUTTON_3
-#define BUTTON_NO BUTTON_4
+#define BUTTON_LEFT BUTTON_2
+#define BUTTON_RIGHT BUTTON_5
+#define BUTTON_OK BUTTON_1
+#define BUTTON_NO BUTTON_6
 
-static const unsigned int BUTTONS_PINS[8] = {3, 4, 5, 6, 7, 8, 9, 10};
+// Defintion des pins
+#define BUZZER_PIN 32
+#define LEDS_PIN 13
 
-//TODO: Find names for the games...
+static const unsigned int BUTTONS_PINS[8] = {2, 14, 16, 5, 27, 26, 4, 25};
+
+// Defintion de tous les états possible du MemoryLearn
 typedef enum MemoryLearnState {
   BOOT,
   SELECT_GAME,
@@ -49,6 +52,7 @@ typedef enum MemoryLearnState {
   ABOUT
 } MemoryLearnState;
 
+// Defintion des jeux et des menus
 typedef struct SelectGame {
   uint8_t cursor_index;
 } SelectGame;
@@ -58,37 +62,45 @@ typedef struct SimonGame {
   uint8_t state;
   uint8_t* buttons;
   uint8_t button_index;
-  uint16_t max_reaction_time;
-  BLECharacteristic* best_score; //TODO: Later
+  int64_t reaction_time;
+  //BLECharacteristic* best_score; //TODO: A connecter
 } SimonGame;
 
 typedef struct LEDReact {
   uint8_t level;
-  uint16_t reaction_time;
-  uint16_t max_reaction_time;
+  int64_t reaction_time;
   uint8_t state;
-  BLECharacteristic* best_score;
-  BLECharacteristic* best_reaction_time;
+  uint8_t triggered_button;
+  //BLECharacteristic* best_score;
+  //BLECharacteristic* best_reaction_time;
 } LEDReact;
 
 typedef struct MemoryLED {
   uint8_t level;
   uint8_t state;
-  uint16_t max_reaction_time;
-  BLECharacteristic* best_score; //TODO: Later
+  uint8_t triggered_button;
+  int64_t reaction_time;
+  //BLECharacteristic* best_score; //TODO: A connecter
 } MemoryLED;
 
 typedef struct ColorLED {
   uint8_t level;
   uint8_t state;
-  uint16_t max_reaction_time;
-  BLECharacteristic* best_score; //TODO: Later
+  int64_t reaction_time;
+  //BLECharacteristic* best_score; //TODO: A connecter
 } ColorLED;
+
+/*typedef struct AboutMenu {
+  int64_t passed_time;
+  uint8_t credits;
+} AboutMenu;*/ //TODO: Faire a la fin
 
 typedef struct MemoryLearn {
   //General variables
   uint8_t buttons;
+  uint8_t just_pressed_buttons;
   MemoryLearnState state;
+  unsigned long previous_time;
 
   //Jeux/Menus
   SelectGame select_game;
@@ -96,26 +108,44 @@ typedef struct MemoryLearn {
   LEDReact led_react;
   MemoryLED memory_led;
   ColorLED color_led;
+  //AboutMenu about_menu;
 
-  //Hardware Managers
+  //Hardware Managers/Drivers
   Adafruit_NeoPixel* leds;
   rgb_lcd lcd;
   hw_timer_t* buzzer_timer;
   BuzzerDriver buzzer;
 
   //Bluetooth variables
-  BLEServer* ble_server;
-  BLEService* ble_service;
-  BLEAdvertising ble_advertising;
-  BLECharacteristic* best_score;  //Pour tester
+  //BLEServer* ble_server;
+  //BLEService* ble_service;
+  //BLEAdvertising* ble_advertising;
+  //BLECharacteristic* best_score;  //Pour tester
 } MemoryLearn;
 
+/**
+ * Met le MemoryLearn en mode erreur. Et affiche l'erreur sur l'écran LCD.
+ * @param MemoryLearn* memory_learn
+ * @param const char* error_message Le message d'erreur
+ */
 void memory_learn_error(MemoryLearn* memory_learn, const char* error_message);
 
+/**
+ * Change l'êtat du MemoryLearn et initialize l'état.
+ * @param MemoryLearn* memory_learn
+ * @param MemoryLearnState state Le nouvel état du MemoryLearn
+ */
 void memory_learn_set_state(MemoryLearn* memory_learn, MemoryLearnState state);
 
+/**
+ * Initialize le MemoryLearn et prepare tout les composants.
+ * @param MemoryLearn* memory_learn
+ */
 void memory_learn_init(MemoryLearn* memory_learn);
 
+/**
+ * Met à jour le MemoryLearn dépendents dans sont état. 
+ */
 void memory_learn_update(MemoryLearn* memory_learn);
 
 #endif
