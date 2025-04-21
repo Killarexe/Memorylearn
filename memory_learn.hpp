@@ -62,13 +62,13 @@ typedef struct SimonGame {
   uint8_t state;
   uint8_t* buttons;
   uint8_t button_index;
-  int64_t reaction_time;
+  unsigned long reaction_time;
   //BLECharacteristic* best_score; //TODO: A connecter
 } SimonGame;
 
 typedef struct LEDReact {
   uint8_t level;
-  int64_t reaction_time;
+  unsigned long reaction_time;
   uint8_t state;
   uint8_t triggered_button;
   //BLECharacteristic* best_score;
@@ -79,21 +79,21 @@ typedef struct MemoryLED {
   uint8_t level;
   uint8_t state;
   uint8_t triggered_button;
-  int64_t reaction_time;
+  unsigned long reaction_time;
   //BLECharacteristic* best_score; //TODO: A connecter
 } MemoryLED;
 
 typedef struct ColorLED {
   uint8_t level;
   uint8_t state;
-  int64_t reaction_time;
+  unsigned long reaction_time;
   //BLECharacteristic* best_score; //TODO: A connecter
 } ColorLED;
 
-/*typedef struct AboutMenu {
+typedef struct AboutMenu {
   int64_t passed_time;
   uint8_t credits;
-} AboutMenu;*/ //TODO: Faire a la fin
+} AboutMenu;
 
 typedef struct MemoryLearn {
   //General variables
@@ -108,7 +108,7 @@ typedef struct MemoryLearn {
   LEDReact led_react;
   MemoryLED memory_led;
   ColorLED color_led;
-  //AboutMenu about_menu;
+  AboutMenu about_menu;
 
   //Hardware Managers/Drivers
   Adafruit_NeoPixel* leds;

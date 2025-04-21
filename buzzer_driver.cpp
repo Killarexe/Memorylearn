@@ -271,7 +271,7 @@ void update_buzzer_driver(BuzzerDriver* driver) {
               break;
               
             case 3: // tempo
-              driver->tick_speed = driver->buffer3 << 5;
+              driver->tick_speed = driver->buffer3 << 4;
               driver->data_pointer[voice] += 2;
               break;
             

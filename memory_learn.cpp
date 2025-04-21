@@ -3,16 +3,37 @@
 #include "Esp.h"
 #include "esp32-hal-timer.h"
 #include "memory_learn.hpp"
+#include "musics.hpp"
 #include "lcd_chars.hpp"
 #include "select_game.hpp"
 //#include "bluetooth_manager.hpp"
-//#include "simon_game.hpp"
-//#include "about.hpp"
+#include "simon_game.hpp"
+#include "about.hpp"
 #include <rgb_lcd.h>
 
 // Fonction appelée tout les 0.1ms 
 void IRAM_ATTR on_buzzer_timer_interrupt(void* buzzer_driver) {
   update_buzzer_driver((BuzzerDriver*)buzzer_driver);
+}
+
+// Vérifie l'état des boutons et met le tout dans un octet
+void update_buttons(MemoryLearn* memory_learn) {
+  uint8_t buttons = 0;
+  uint8_t previous_buttons = memory_learn->buttons;
+
+  for (uint8_t i = 0; i < 8; i++) {
+    buttons |= (digitalRead(BUTTONS_PINS[i]) & 1) << i;
+  }
+  buttons = ~buttons;
+
+  memory_learn->just_pressed_buttons = (buttons ^ previous_buttons) & buttons;
+  memory_learn->buttons = buttons;
+  if (previous_buttons != buttons) {
+    Serial.print("Buttons: ");
+    Serial.print(buttons, BIN);
+    Serial.print(", Just pressed buttons: ");
+    Serial.println(memory_learn->just_pressed_buttons, BIN);
+  }
 }
 
 void memory_learn_boot(MemoryLearn* memory_learn) {
@@ -27,8 +48,7 @@ void memory_learn_boot(MemoryLearn* memory_learn) {
   memory_learn->lcd.createChar(2, BOTTOM_LEFT_ARROW);
   memory_learn->lcd.createChar(3, TOP_RIGHT_ARROW);
   memory_learn->lcd.createChar(4, BOTTOM_RIGHT_ARROW);
-  memory_learn->lcd.createChar(5, ERROR_ICON_LEFT);
-  memory_learn->lcd.createChar(6, ERROR_ICON_RIGHT);
+  memory_learn->lcd.createChar(5, ERROR_ICON);
   memory_learn->lcd.clear();
 
   // Initialize les LED RGB
@@ -68,47 +88,29 @@ void memory_learn_boot(MemoryLearn* memory_learn) {
 
   memory_learn->previous_time = esp_timer_get_time();
   memory_learn->just_pressed_buttons = 0;
-  // Initialize le menu de selection des jeux
-  memory_learn_set_state(memory_learn, MemoryLearnState::SELECT_GAME);
-
+  play_buzzer_driver(&memory_learn->buzzer, INTRO);
   memory_learn->lcd.clear();
   memory_learn->lcd.setCursor(0, 0);
   memory_learn->lcd.print("   Memo");
-  tone_buzzer_driver(&memory_learn->buzzer, 523, 500);
   delay(500);
   memory_learn->lcd.print("ry");
-  tone_buzzer_driver(&memory_learn->buzzer, 587, 500);
   delay(500);
   memory_learn->lcd.print("Learn");
-  tone_buzzer_driver(&memory_learn->buzzer, 494, 500);
   delay(500);
-}
-
-// Vérifie l'état des boutons et met le tout dans un octet
-void update_buttons(MemoryLearn* memory_learn) {
-  uint8_t buttons = 0;
-  uint8_t previous_buttons = memory_learn->buttons;
-
-  for (uint8_t i = 0; i < 8; i++) {
-    buttons |= (digitalRead(BUTTONS_PINS[i]) & 1) << i;
+  memory_learn->lcd.setCursor(0, 1);
+  memory_learn->lcd.print("Press any button");
+  while (!memory_learn->just_pressed_buttons) {
+    update_buttons(memory_learn);
   }
-  buttons = ~buttons;
-
-  memory_learn->just_pressed_buttons = (buttons ^ previous_buttons) & buttons;
-  memory_learn->buttons = buttons;
-  if (previous_buttons != buttons) {
-    Serial.print("Buttons: ");
-    Serial.print(buttons, BIN);
-    Serial.print(", Just pressed buttons: ");
-    Serial.println(memory_learn->just_pressed_buttons, BIN);
-  }
+  // Initialize le menu de selection des jeux
+  memory_learn_set_state(memory_learn, MemoryLearnState::SELECT_GAME);
 }
 
 // Met le MemoryLearn en état d'erreur, et attend qu'un bouton est appuyé pour redémarrer. 
 void memory_learn_error(MemoryLearn* memory_learn, const char* error_message) {
   memory_learn->lcd.clear();
   memory_learn->lcd.setCursor(0, 0);
-  memory_learn->lcd.print("\5\6    Error   \5\6");
+  memory_learn->lcd.print("\5-=-/Error.\\-=-\5");
   memory_learn->lcd.setCursor(0, 1);
   memory_learn->lcd.print(error_message);
 
@@ -136,11 +138,11 @@ void memory_learn_set_state(MemoryLearn* memory_learn, MemoryLearnState state) {
       select_game_init(memory_learn);
       break;
     case MemoryLearnState::SIMON:
-      //simon_game_init(memory_learn);
-      //break;
+      simon_game_init(memory_learn);
+      break;
     case MemoryLearnState::ABOUT:
-      //about_init(memory_learn);
-      //break;
+      about_init(memory_learn);
+      break;
     default:
       // Erreur si l'état demandé n'existe pas ou pas référé ici.
       memory_learn_error(memory_learn, "Unexpected State");
@@ -167,11 +169,11 @@ void memory_learn_update(MemoryLearn *memory_learn) {
       select_game_update(memory_learn);
       break;
     case MemoryLearnState::SIMON:
-      //simon_game_update(memory_learn, delta_time);
-      //break;
+      simon_game_update(memory_learn, delta_time);
+      break;
     case MemoryLearnState::ABOUT:
-      //about_update(memory_learn);
-      //break;
+      about_update(memory_learn, delta_time);
+      break;
     default:
       // Erreur si l'état demandé n'existe pas ou pas référé ici.
       memory_learn_error(memory_learn, "Unexpected State");

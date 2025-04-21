@@ -1,5 +1,4 @@
 #include "select_game.hpp"
-#include "led.hpp"
 #include "memory_learn.hpp"
 #include <string.h>
 
@@ -23,6 +22,7 @@ const MemoryLearnState STATES[5] = {
 
 // Affiche le jeu séléctionée sur l'écran LCD
 void select_game_update_select(MemoryLearn* memory_learn) {
+  tone_buzzer_driver(&memory_learn->buzzer, 440, 125);
   memory_learn->lcd.clear();
   memory_learn->lcd.setCursor(0, 0);
   memory_learn->lcd.print(NAMES[memory_learn->select_game.cursor_index]);
@@ -36,7 +36,6 @@ void select_game_update_select(MemoryLearn* memory_learn) {
 void select_game_init(MemoryLearn* memory_learn) {
   memory_learn->select_game.cursor_index = 0;
   select_game_update_select(memory_learn);
-  //play_buzzer_driver(&memory_learn->buzzer, LED_MUSIC);
 }
 
 // Met a jour le menu en verifient les boutons droite et gauche pour la sélécton, et le bouton OK pour jouer.
@@ -44,7 +43,6 @@ void select_game_update(MemoryLearn* memory_learn) {
   if (memory_learn->just_pressed_buttons & BUTTON_LEFT) {
     memory_learn->select_game.cursor_index++;
     memory_learn->select_game.cursor_index %= 5;
-    tone_buzzer_driver(&memory_learn->buzzer, 440, 125);
     select_game_update_select(memory_learn);
   } else if (memory_learn->just_pressed_buttons & BUTTON_RIGHT) {
     if (memory_learn->select_game.cursor_index == 0) {
@@ -52,7 +50,6 @@ void select_game_update(MemoryLearn* memory_learn) {
     } else {
       memory_learn->select_game.cursor_index--;
     }
-    tone_buzzer_driver(&memory_learn->buzzer, 220, 125);
     select_game_update_select(memory_learn);
   } else if (memory_learn->just_pressed_buttons & BUTTON_OK) {
     memory_learn_set_state(memory_learn, STATES[memory_learn->select_game.cursor_index]);
