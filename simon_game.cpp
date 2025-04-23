@@ -4,14 +4,14 @@
 
 // Couleur de chaque boutons
 const uint8_t BUTTON_COLORS[8][3] = {
-  {0x04, 0x04, 0x04},
   {0x00, 0x04, 0x00},
-  {0x01, 0x01, 0x01},
-  {0x04, 0x00, 0x00},
-  {0x04, 0x01, 0x01},
   {0x04, 0x04, 0x04},
-  {0x04, 0x04, 0x00},
-  {0x00, 0x02, 0x04}
+  {0x00, 0x00, 0x04},
+  {0x04, 0x02, 0x00},
+  {0x02, 0x00, 0x04},
+  {0x04, 0x00, 0x00},
+  {0x04, 0x00, 0x04},
+  {0x04, 0x04, 0x00}
 };
 
 // Frequence sonore de chaque boutons
@@ -79,6 +79,9 @@ void simon_game_update(MemoryLearn* memory_learn, unsigned long delta_time) {
         uint32_t duration = 1000; //TODO: needs to depends on level
         tone_buzzer_driver(&memory_learn->buzzer, BUTTON_FREQUENCIES[button_index], duration);
         delay(duration);
+        memory_learn->leds->setPixelColor(button_index, 0, 0, 0);
+        memory_learn->leds->show();
+        delay(duration);
       }
       memory_learn->leds->clear();
       memory_learn->leds->show();
@@ -87,7 +90,7 @@ void simon_game_update(MemoryLearn* memory_learn, unsigned long delta_time) {
     case SIMON_GAME_STATE_PLAY: {
       // Quand c'est au tour de la personne
       game->reaction_time += delta_time;
-      unsigned long max_reaction_time = 3000; //TODO: needs to depends on level
+      unsigned long max_reaction_time = 0xFFFF; //TODO: needs to depends on level
       if (game->reaction_time >= max_reaction_time) {
         tone_buzzer_driver(&memory_learn->buzzer, 220, 250);
         game->state = SIMON_GAME_STATE_GAMEOVER; // Si temps écoulé: Game Over
@@ -107,6 +110,10 @@ void simon_game_update(MemoryLearn* memory_learn, unsigned long delta_time) {
               memory_learn->leds->show();
               // Si c'est le dernier bouton a appuyé
               if (game->button_index + 1 >= game->level) {
+                delay(250);
+                memory_learn->leds->setPixelColor(correct_button, 0, 0, 0);
+                memory_learn->leds->show();
+                delay(250);
                 // Passer au niveau suivant
                 game->button_index = 0;
                 game->level++;

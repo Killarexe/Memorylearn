@@ -1,3 +1,4 @@
+#include "esp_attr.h"
 #include "esp32-hal-gpio.h"
 #include "esp_timer.h"
 #include "Esp.h"
@@ -5,13 +6,17 @@
 #include "memory_learn.hpp"
 #include "musics.hpp"
 #include "lcd_chars.hpp"
-#include "select_game.hpp"
 //#include "bluetooth_manager.hpp"
+
+#include "select_game.hpp"
 #include "simon_game.hpp"
+#include "led_react.hpp"
+#include "memory_led.hpp"
 #include "about.hpp"
+
 #include <rgb_lcd.h>
 
-// Fonction appelée tout les 0.1ms 
+// Buzzer driver interrupt
 void IRAM_ATTR on_buzzer_timer_interrupt(void* buzzer_driver) {
   update_buzzer_driver((BuzzerDriver*)buzzer_driver);
 }
@@ -37,11 +42,9 @@ void update_buttons(MemoryLearn* memory_learn) {
 }
 
 void memory_learn_boot(MemoryLearn* memory_learn) {
-  // Initialize le serial pour debug.
   Serial.begin(115200);
   Serial.println("Initialzing MemoryLearn!");
 
-  // Initialize l'écran LCD avec les charatères customs
   Serial.println("Initialzing LCD Screen...");
   memory_learn->lcd.begin(16, 2);
   memory_learn->lcd.createChar(1, TOP_LEFT_ARROW);
@@ -51,7 +54,6 @@ void memory_learn_boot(MemoryLearn* memory_learn) {
   memory_learn->lcd.createChar(5, ERROR_ICON);
   memory_learn->lcd.clear();
 
-  // Initialize les LED RGB
   Serial.println("Initialzing LEDs...");
   memory_learn->leds = new Adafruit_NeoPixel(8, LEDS_PIN, NEO_GRB + NEO_KHZ800);
   if (memory_learn->leds == nullptr) {
@@ -62,17 +64,14 @@ void memory_learn_boot(MemoryLearn* memory_learn) {
   }
   memory_learn->lcd.clear();
 
-  // Met les pins des boutons en INPUT
   Serial.println("Initialzing buttons...");
   for (uint8_t i = 0; i < 8; i++) {
     pinMode(BUTTONS_PINS[i], INPUT_PULLUP);
   }
 
-  // Initialize le driver du buzzer
   Serial.println("Initialzing buzzer driver...");
   init_buzzer_driver(&memory_learn->buzzer, BUZZER_PIN);
 
-  // Crée une interuption tout les 0.1ms pour le driver du buzzer.
   Serial.println("Creating buzzer driver timer interrupt...");
   memory_learn->buzzer_timer = timerBegin(100000);
   if (!memory_learn->buzzer_timer) {
@@ -82,39 +81,39 @@ void memory_learn_boot(MemoryLearn* memory_learn) {
     timerAlarm(memory_learn->buzzer_timer, 1, true, 0);
   }
 
-  // Initialize la partie Bluetooth
   //Serial.println("Starting Bluetooth device...");
   //bluetooth_start(memory_learn);
 
-  memory_learn->previous_time = esp_timer_get_time();
+  memory_learn->previous_time = millis();
+  memory_learn->button_time = 0;
   memory_learn->just_pressed_buttons = 0;
-  play_buzzer_driver(&memory_learn->buzzer, INTRO);
+
   memory_learn->lcd.clear();
   memory_learn->lcd.setCursor(0, 0);
   memory_learn->lcd.print("   Memo");
+  tone_buzzer_driver(&memory_learn->buzzer, 523, 500);
   delay(500);
   memory_learn->lcd.print("ry");
+  tone_buzzer_driver(&memory_learn->buzzer, 587, 500);
   delay(500);
   memory_learn->lcd.print("Learn");
+  tone_buzzer_driver(&memory_learn->buzzer, 494, 500);
   delay(500);
   memory_learn->lcd.setCursor(0, 1);
   memory_learn->lcd.print("Press any button");
   while (!memory_learn->just_pressed_buttons) {
     update_buttons(memory_learn);
   }
-  // Initialize le menu de selection des jeux
   memory_learn_set_state(memory_learn, MemoryLearnState::SELECT_GAME);
 }
 
-// Met le MemoryLearn en état d'erreur, et attend qu'un bouton est appuyé pour redémarrer. 
 void memory_learn_error(MemoryLearn* memory_learn, const char* error_message) {
   memory_learn->lcd.clear();
   memory_learn->lcd.setCursor(0, 0);
-  memory_learn->lcd.print("\5-=-/Error.\\-=-\5");
+  memory_learn->lcd.print("\5-=-=Error.=-=-\5");
   memory_learn->lcd.setCursor(0, 1);
   memory_learn->lcd.print(error_message);
 
-  // Attend qu'un bouton soit appuyé.
   for (uint8_t i = 0; i < 8; i++) {
     memory_learn->leds->setPixelColor(i, 4, 0, 0);
   }
@@ -127,7 +126,6 @@ void memory_learn_error(MemoryLearn* memory_learn, const char* error_message) {
   ESP.restart();
 }
 
-// Change l'état du MemoryLearn. Et appele la fonction d'initialisation pour l'état.
 void memory_learn_set_state(MemoryLearn* memory_learn, MemoryLearnState state) {
   memory_learn->state = state;
   memory_learn->lcd.clear();
@@ -143,27 +141,36 @@ void memory_learn_set_state(MemoryLearn* memory_learn, MemoryLearnState state) {
     case MemoryLearnState::ABOUT:
       about_init(memory_learn);
       break;
+    case MemoryLearnState::LED_REACT:
+      led_react_init(memory_learn);
+      break;
+    case MemoryLearnState::MEMORY_LED:
+      memory_led_init(memory_learn);
+      break;
     default:
-      // Erreur si l'état demandé n'existe pas ou pas référé ici.
       memory_learn_error(memory_learn, "Unexpected State");
       break;
   }
 }
 
-// Met juste en état de démarage.
 void memory_learn_init(MemoryLearn *memory_learn) {
   memory_learn->state = MemoryLearnState::BOOT;
   memory_learn_boot(memory_learn);
 }
 
-// Fonction loop du MemoryLearn
 void memory_learn_update(MemoryLearn *memory_learn) {
-  // Calcue le temps passée avant la dernière appel.
   unsigned long current_time = millis();
   unsigned long delta_time = current_time - memory_learn->previous_time;
   memory_learn->previous_time = current_time;
-  update_buttons(memory_learn); // Met à jour les boutons
-  // Met à jour l'état actuelle du MemoryLearn
+
+  memory_learn->button_time += delta_time;
+  if (memory_learn->button_time > BUTTONS_UPDATE_RATE) {
+    memory_learn->button_time = 0;
+    update_buttons(memory_learn);
+  } else {
+    memory_learn->just_pressed_buttons = 0;
+  }
+
   switch (memory_learn->state) {
     case MemoryLearnState::SELECT_GAME:
       select_game_update(memory_learn);
@@ -174,8 +181,13 @@ void memory_learn_update(MemoryLearn *memory_learn) {
     case MemoryLearnState::ABOUT:
       about_update(memory_learn, delta_time);
       break;
+    case MemoryLearnState::LED_REACT:
+      led_react_update(memory_learn, delta_time);
+      break;
+    case MemoryLearnState::MEMORY_LED:
+      memory_led_update(memory_learn, delta_time);
+      break;
     default:
-      // Erreur si l'état demandé n'existe pas ou pas référé ici.
       memory_learn_error(memory_learn, "Unexpected State");
       break;
   }

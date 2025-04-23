@@ -283,6 +283,10 @@ void update_buzzer_driver(BuzzerDriver* driver) {
             case 5:
               driver->data_pointer[voice] += 2;
               break;
+            
+            case 7:
+              stop_buzzer_driver(driver);
+              return;
 
             case 15:
               if (driver->pointer_location[voice] != 0) {

@@ -16,11 +16,6 @@
 
 #include "esp32-hal-timer.h"
 
-
-/*
- * Les états des boutons sont mis tous sur un octet.
- * Ceci defitie les positions des boutons sur l'octet.
- */
 #define BUTTON_1 1
 #define BUTTON_2 2
 #define BUTTON_3 4
@@ -35,13 +30,14 @@
 #define BUTTON_OK BUTTON_1
 #define BUTTON_NO BUTTON_6
 
-// Defintion des pins
+// Pins defintion
 #define BUZZER_PIN 32
 #define LEDS_PIN 13
 
-static const unsigned int BUTTONS_PINS[8] = {2, 14, 16, 5, 27, 26, 4, 25};
+#define BUTTONS_UPDATE_RATE 100
 
-// Defintion de tous les états possible du MemoryLearn
+static const unsigned int BUTTONS_PINS[8] = {2, 14, 16, 4, 27, 26, 5, 25};
+
 typedef enum MemoryLearnState {
   BOOT,
   SELECT_GAME,
@@ -52,7 +48,6 @@ typedef enum MemoryLearnState {
   ABOUT
 } MemoryLearnState;
 
-// Defintion des jeux et des menus
 typedef struct SelectGame {
   uint8_t cursor_index;
 } SelectGame;
@@ -68,9 +63,9 @@ typedef struct SimonGame {
 
 typedef struct LEDReact {
   uint8_t level;
-  unsigned long reaction_time;
+  unsigned long accumulated_time;
   uint8_t state;
-  uint8_t triggered_button;
+  uint8_t correct_button;
   //BLECharacteristic* best_score;
   //BLECharacteristic* best_reaction_time;
 } LEDReact;
@@ -78,8 +73,8 @@ typedef struct LEDReact {
 typedef struct MemoryLED {
   uint8_t level;
   uint8_t state;
-  uint8_t triggered_button;
-  unsigned long reaction_time;
+  uint8_t correct_button;
+  unsigned long accumulated_time;
   //BLECharacteristic* best_score; //TODO: A connecter
 } MemoryLED;
 
@@ -101,6 +96,7 @@ typedef struct MemoryLearn {
   uint8_t just_pressed_buttons;
   MemoryLearnState state;
   unsigned long previous_time;
+  unsigned long button_time;
 
   //Jeux/Menus
   SelectGame select_game;

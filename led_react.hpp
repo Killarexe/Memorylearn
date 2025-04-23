@@ -20,7 +20,8 @@ void led_react_init(MemoryLearn* memory_learn);
 /**
  * Met à jour le jeu LED React.
  * @param MemoryLearn* memory_learn
+ * @param uint32_t delta_time
  */
-void led_react_update(MemoryLearn* memory_learn, int64_t delta_time);
+void led_react_update(MemoryLearn* memory_learn, unsigned long delta_time);
 
 #endif

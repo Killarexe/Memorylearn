@@ -1,7 +1,6 @@
 #ifndef MEMORY_LED_HPP
 #define MEMORY_LED_HPP
 
-// Etats possible du jeux
 #define MEMORY_LED_STATE_MENU 0
 #define MEMORY_LED_STATE_SHOW 1
 #define MEMORY_LED_STATE_PLAY 2
@@ -11,6 +10,6 @@
 
 void memory_led_init(MemoryLearn* memory_learn);
 
-void memory_led_update(MemoryLearn* memory_learn, int64_t delta_time);
+void memory_led_update(MemoryLearn* memory_learn, unsigned long delta_time);
 
 #endif

@@ -1,4 +1,5 @@
 #include "about.hpp"
+#include "musics.hpp"
 
 // Affiche des infos sur le MemoryLearn
 void about_init(MemoryLearn* memory_learn) {
@@ -7,10 +8,13 @@ void about_init(MemoryLearn* memory_learn) {
   memory_learn->lcd.print("-=-=-About.-=-=-");
   memory_learn->lcd.setCursor(0, 1);
   memory_learn->lcd.print("MemoryLearn v1.0");
+  memory_learn->about_menu.credits = 0;
+  play_buzzer_driver(&memory_learn->buzzer, LED_MUSIC);
 }
 
 void update_credits(MemoryLearn* memory_learn) {
   memory_learn->about_menu.credits++;
+  memory_learn->lcd.clear();
   memory_learn->lcd.setCursor(0, 0);
   switch (memory_learn->about_menu.credits) {
     default:
@@ -45,8 +49,9 @@ void about_update(MemoryLearn* memory_learn, unsigned long delta_time) {
     update_credits(memory_learn);
   }
   // Vérifie si le bouton OK ou NON et appuyé.
-  if (memory_learn->buttons & (BUTTON_OK | BUTTON_NO)) {
+  if (memory_learn->just_pressed_buttons & (BUTTON_OK | BUTTON_NO)) {
     // Retourne dans le menu de sélécton
+    stop_buzzer_driver(&memory_learn->buzzer);
     memory_learn_set_state(memory_learn, MemoryLearnState::SELECT_GAME);
   }
 }
