@@ -115,6 +115,7 @@ void init_buzzer_driver(BuzzerDriver* driver, unsigned char pin) {
 }
 
 void play_buzzer_driver(BuzzerDriver* driver, const unsigned char* music_data) {
+  noTone(driver->output_pin);
   driver->current_byte = 0;
   driver->current_bit = 0;
   driver->sample_counter = 0;

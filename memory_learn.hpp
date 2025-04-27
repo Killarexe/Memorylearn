@@ -10,9 +10,9 @@
 #include <Adafruit_NeoPixel.h>
 #include <rgb_lcd.h>
 
-//#include <BLEDevice.h>
-//#include <BLEUtils.h>
-//#include <BLEServer.h>
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
 
 #include "esp32-hal-timer.h"
 
@@ -112,11 +112,10 @@ typedef struct MemoryLearn {
   hw_timer_t* buzzer_timer;
   BuzzerDriver buzzer;
 
-  //Bluetooth variables
-  //BLEServer* ble_server;
-  //BLEService* ble_service;
-  //BLEAdvertising* ble_advertising;
-  //BLECharacteristic* best_score;  //Pour tester
+  BLEServer* ble_server;
+  BLEService* ble_service;
+  BLEAdvertising* ble_advertising;
+  BLECharacteristic* best_score;  //Pour tester
 } MemoryLearn;
 
 /**

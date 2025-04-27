@@ -6,7 +6,7 @@
 #include "memory_learn.hpp"
 #include "musics.hpp"
 #include "lcd_chars.hpp"
-//#include "bluetooth_manager.hpp"
+#include "bluetooth_manager.hpp"
 
 #include "select_game.hpp"
 #include "simon_game.hpp"
@@ -81,8 +81,8 @@ void memory_learn_boot(MemoryLearn* memory_learn) {
     timerAlarm(memory_learn->buzzer_timer, 1, true, 0);
   }
 
-  //Serial.println("Starting Bluetooth device...");
-  //bluetooth_start(memory_learn);
+  Serial.println("Starting Bluetooth device...");
+  bluetooth_start(memory_learn);
 
   memory_learn->previous_time = millis();
   memory_learn->button_time = 0;
