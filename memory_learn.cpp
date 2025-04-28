@@ -6,12 +6,11 @@
 #include "memory_learn.hpp"
 #include "musics.hpp"
 #include "lcd_chars.hpp"
-#include "bluetooth_manager.hpp"
 
 #include "select_game.hpp"
 #include "simon_game.hpp"
 #include "led_react.hpp"
-#include "memory_led.hpp"
+#include "color_led.hpp"
 #include "about.hpp"
 
 #include <rgb_lcd.h>
@@ -81,9 +80,6 @@ void memory_learn_boot(MemoryLearn* memory_learn) {
     timerAlarm(memory_learn->buzzer_timer, 1, true, 0);
   }
 
-  Serial.println("Starting Bluetooth device...");
-  bluetooth_start(memory_learn);
-
   memory_learn->previous_time = millis();
   memory_learn->button_time = 0;
   memory_learn->just_pressed_buttons = 0;
@@ -144,8 +140,8 @@ void memory_learn_set_state(MemoryLearn* memory_learn, MemoryLearnState state) {
     case MemoryLearnState::LED_REACT:
       led_react_init(memory_learn);
       break;
-    case MemoryLearnState::MEMORY_LED:
-      memory_led_init(memory_learn);
+    case MemoryLearnState::COLOR_LED:
+      color_led_init(memory_learn);
       break;
     default:
       memory_learn_error(memory_learn, "Unexpected State");
@@ -184,8 +180,8 @@ void memory_learn_update(MemoryLearn *memory_learn) {
     case MemoryLearnState::LED_REACT:
       led_react_update(memory_learn, delta_time);
       break;
-    case MemoryLearnState::MEMORY_LED:
-      memory_led_update(memory_learn, delta_time);
+    case MemoryLearnState::COLOR_LED:
+      color_led_update(memory_learn, delta_time);
       break;
     default:
       memory_learn_error(memory_learn, "Unexpected State");

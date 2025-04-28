@@ -75,7 +75,21 @@ void led_react_update_gameover(MemoryLearn* memory_learn, LEDReact* game, unsign
     memory_learn->lcd.print("     Ready.     ");
   } else if (memory_learn->just_pressed_buttons & BUTTON_NO) {
     memory_learn_set_state(memory_learn, MemoryLearnState::SELECT_GAME);
+  } else if (game->accumulated_time > 2000) {
+    game->correct_button++;
+    if (game->correct_button > 2) {
+      game->correct_button = 0;
+    }
+    memory_learn->lcd.setCursor(0, 1);
+    if (game->correct_button) {
+      memory_learn->lcd.print("Score: ");
+      memory_learn->lcd.printf("%08d", game->level);
+    } else {
+      memory_learn->lcd.print("    Restart    ");
+    }
+    game->accumulated_time = 0;
   }
+  game->accumulated_time += delta_time;
 }
 
 void led_react_update(MemoryLearn* memory_learn, unsigned long delta_time) {

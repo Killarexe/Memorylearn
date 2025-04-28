@@ -1,28 +1,28 @@
-#include "memory_led.hpp"
+#include "color_led.hpp"
 #include "buzzer_driver.hpp"
 #include "esp_random.h"
 
-void memory_led_init(MemoryLearn* memory_learn) {
+void color_led_init(MemoryLearn* memory_learn) {
   memory_learn->leds->clear();
   memory_learn->lcd.clear();
-  memory_learn->memory_led.level = 0;
-  memory_learn->memory_led.correct_button = 0;
-  memory_learn->memory_led.accumulated_time = 0;
-  memory_learn->memory_led.state = MEMORY_LED_STATE_MENU;
+  memory_learn->color_led.level = 0;
+  memory_learn->color_led.correct_button = 0;
+  memory_learn->color_led.accumulated_time = 0;
+  memory_learn->color_led.state = COLOR_LED_STATE_MENU;
   memory_learn->lcd.setCursor(0, 0);
   memory_learn->lcd.print("Memory LED");
   memory_learn->lcd.setCursor(0, 1);
   memory_learn->lcd.print("Press any button!");
 }
 
-void memory_led_update_menu(MemoryLearn* memory_learn, MemoryLED* game, unsigned long delta_time) {
+void color_led_update_menu(MemoryLearn* memory_learn, ColorLED* game, unsigned long delta_time) {
   if (memory_learn->just_pressed_buttons) {
     memory_learn->lcd.clear();
-    game->state = MEMORY_LED_STATE_PLAY;
+    game->state = COLOR_LED_STATE_PLAY;
   }
 }
 
-void memory_led_update_play(MemoryLearn* memory_learn, MemoryLED* game, unsigned long delta_time) {
+void color_led_update_play(MemoryLearn* memory_learn, ColorLED* game, unsigned long delta_time) {
   if (game->correct_button) {
     uint8_t target_button = 1 << (game->correct_button - 1);
     if (memory_learn->just_pressed_buttons & target_button) {
@@ -34,7 +34,7 @@ void memory_led_update_play(MemoryLearn* memory_learn, MemoryLED* game, unsigned
         memory_learn->leds->setPixelColor(j, 6, 0, 0);
       }
       memory_learn->leds->show();
-      game->state = MEMORY_LED_STATE_GAMEOVER;
+      game->state = COLOR_LED_STATE_GAMEOVER;
       tone_buzzer_driver(&memory_learn->buzzer, 220, 250);
     }
   } else if (game->accumulated_time > 2000) {
@@ -81,7 +81,7 @@ void memory_led_update_play(MemoryLearn* memory_learn, MemoryLED* game, unsigned
   game->accumulated_time += delta_time;
 }
 
-void memory_led_update_gameover(MemoryLearn* memory_learn, MemoryLED* game, unsigned long delta_time) {
+void color_led_update_gameover(MemoryLearn* memory_learn, ColorLED* game, unsigned long delta_time) {
   memory_learn->lcd.setCursor(0, 0);
   memory_learn->lcd.print("=-=Game over=-=");
   memory_learn->lcd.setCursor(0, 1);
@@ -91,25 +91,39 @@ void memory_led_update_gameover(MemoryLearn* memory_learn, MemoryLED* game, unsi
     game->level = 0;
     game->accumulated_time = 0;
     game->correct_button = 0;
-    game->state = MEMORY_LED_STATE_PLAY;
+    game->state = COLOR_LED_STATE_PLAY;
     memory_learn->leds->clear();
     memory_learn->leds->show();
   } else if (memory_learn->just_pressed_buttons & BUTTON_NO) {
     memory_learn_set_state(memory_learn, MemoryLearnState::SELECT_GAME);
+  } else if (game->accumulated_time > 2000) {
+    game->correct_button++;
+    if (game->correct_button > 2) {
+      game->correct_button = 0;
+    }
+    memory_learn->lcd.setCursor(0, 1);
+    if (game->correct_button) {
+      memory_learn->lcd.print("Score: ");
+      memory_learn->lcd.printf("%08d", game->level);
+    } else {
+      memory_learn->lcd.print("    Restart    ");
+    }
+    game->accumulated_time = 0;
   }
+  game->accumulated_time += delta_time;
 }
 
 void memory_led_update(MemoryLearn* memory_learn, unsigned long delta_time) {
-  MemoryLED* game = &memory_learn->memory_led;
+  ColorLED* game = &memory_learn->color_led;
   switch (game->state) {
-    case MEMORY_LED_STATE_MENU:
-      memory_led_update_menu(memory_learn, game, delta_time);
+    case COLOR_LED_STATE_MENU:
+      color_led_update_menu(memory_learn, game, delta_time);
       break;
-    case MEMORY_LED_STATE_PLAY:
-      memory_led_update_play(memory_learn, game, delta_time);
+    case COLOR_LED_STATE_PLAY:
+      color_led_update_play(memory_learn, game, delta_time);
       break;
-    case MEMORY_LED_STATE_GAMEOVER:
-      memory_led_update_gameover(memory_learn, game, delta_time);
+    case COLOR_LED_STATE_GAMEOVER:
+      color_led_update_gameover(memory_learn, game, delta_time);
       break;
     default:
       memory_learn_error(memory_learn, "Unexpected state");

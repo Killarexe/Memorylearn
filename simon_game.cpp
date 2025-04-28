@@ -158,7 +158,21 @@ void simon_game_update_gameover(MemoryLearn* memory_learn, SimonGame* game, unsi
     game->state = SIMON_GAME_STATE_SHOW;
   } else if (memory_learn->just_pressed_buttons & BUTTON_NO) {
     memory_learn_set_state(memory_learn, MemoryLearnState::SELECT_GAME);
+  } else if (game->reaction_time > 2000) {
+    game->button_index++;
+    if (game->button_index > 2) {
+      game->button_index = 0;
+    }
+    memory_learn->lcd.setCursor(0, 1);
+    if (game->button_index) {
+      memory_learn->lcd.print("Score: ");
+      memory_learn->lcd.printf("%08d", game->level);
+    } else {
+      memory_learn->lcd.print("    Restart    ");
+    }
+    game->reaction_time = 0;
   }
+  game->reaction_time += delta_time;
 }
 
 // Met le jeu à jour selon l'état du jeu

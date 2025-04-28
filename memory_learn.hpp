@@ -10,9 +10,9 @@
 #include <Adafruit_NeoPixel.h>
 #include <rgb_lcd.h>
 
-#include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLEServer.h>
+//#include <BLEDevice.h>
+//#include <BLEUtils.h>
+//#include <BLEServer.h>
 
 #include "esp32-hal-timer.h"
 
@@ -58,7 +58,6 @@ typedef struct SimonGame {
   uint8_t* buttons;
   uint8_t button_index;
   unsigned long reaction_time;
-  //BLECharacteristic* best_score; //TODO: A connecter
 } SimonGame;
 
 typedef struct LEDReact {
@@ -66,8 +65,6 @@ typedef struct LEDReact {
   unsigned long accumulated_time;
   uint8_t state;
   uint8_t correct_button;
-  //BLECharacteristic* best_score;
-  //BLECharacteristic* best_reaction_time;
 } LEDReact;
 
 typedef struct MemoryLED {
@@ -75,14 +72,13 @@ typedef struct MemoryLED {
   uint8_t state;
   uint8_t correct_button;
   unsigned long accumulated_time;
-  //BLECharacteristic* best_score; //TODO: A connecter
 } MemoryLED;
 
 typedef struct ColorLED {
   uint8_t level;
   uint8_t state;
-  unsigned long reaction_time;
-  //BLECharacteristic* best_score; //TODO: A connecter
+  uint8_t correct_button;
+  unsigned long accumulated_time;
 } ColorLED;
 
 typedef struct AboutMenu {
@@ -102,7 +98,6 @@ typedef struct MemoryLearn {
   SelectGame select_game;
   SimonGame simon_game;
   LEDReact led_react;
-  MemoryLED memory_led;
   ColorLED color_led;
   AboutMenu about_menu;
 
@@ -111,11 +106,6 @@ typedef struct MemoryLearn {
   rgb_lcd lcd;
   hw_timer_t* buzzer_timer;
   BuzzerDriver buzzer;
-
-  BLEServer* ble_server;
-  BLEService* ble_service;
-  BLEAdvertising* ble_advertising;
-  BLECharacteristic* best_score;  //Pour tester
 } MemoryLearn;
 
 /**
