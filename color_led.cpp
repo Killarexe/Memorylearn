@@ -34,6 +34,8 @@ void color_led_update_play(MemoryLearn* memory_learn, ColorLED* game, unsigned l
         memory_learn->leds->setPixelColor(j, 6, 0, 0);
       }
       memory_learn->leds->show();
+      memory_learn->lcd.setCursor(0, 1);
+      memory_learn->lcd.print("    Restart    ");
       game->state = COLOR_LED_STATE_GAMEOVER;
       tone_buzzer_driver(&memory_learn->buzzer, 220, 250);
     }
@@ -52,13 +54,14 @@ void color_led_update_play(MemoryLearn* memory_learn, ColorLED* game, unsigned l
     if (max_diff < 1) {
       max_diff = 1;
     }
-    uint8_t diff = 1 + (uint8_t)(esp_random() % max_diff);
+    uint8_t diff = (1 + (uint8_t)(esp_random() % max_diff)) * 2;
     int8_t diff_dir = (int8_t)(esp_random() % 2) * 2 - 1;
     switch (color) {
       case 0:
         diff_red = (diff_red + diff_dir * diff) & 0x1F;
         break;
       case 1:
+      case 3:
         diff_green = (diff_green + diff_dir * diff) & 0x1F;
         break;
       case 2:
@@ -84,8 +87,6 @@ void color_led_update_play(MemoryLearn* memory_learn, ColorLED* game, unsigned l
 void color_led_update_gameover(MemoryLearn* memory_learn, ColorLED* game, unsigned long delta_time) {
   memory_learn->lcd.setCursor(0, 0);
   memory_learn->lcd.print("=-=Game over=-=");
-  memory_learn->lcd.setCursor(0, 1);
-  memory_learn->lcd.print("    Restart    ");
   if (memory_learn->just_pressed_buttons & BUTTON_OK) {
     memory_learn->lcd.clear();
     game->level = 0;
@@ -113,7 +114,7 @@ void color_led_update_gameover(MemoryLearn* memory_learn, ColorLED* game, unsign
   game->accumulated_time += delta_time;
 }
 
-void memory_led_update(MemoryLearn* memory_learn, unsigned long delta_time) {
+void color_led_update(MemoryLearn* memory_learn, unsigned long delta_time) {
   ColorLED* game = &memory_learn->color_led;
   switch (game->state) {
     case COLOR_LED_STATE_MENU:

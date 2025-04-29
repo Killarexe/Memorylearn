@@ -92,6 +92,7 @@ void init_buzzer_driver(BuzzerDriver* driver, unsigned char pin) {
   driver->sample_counter = 0;
   driver->current_sample = 0;
   driver->output_pin = pin;
+  driver->needs_stop = 0;
 
   driver->buffer1 = 0;
   driver->buffer2 = 0;
@@ -116,6 +117,7 @@ void init_buzzer_driver(BuzzerDriver* driver, unsigned char pin) {
 
 void play_buzzer_driver(BuzzerDriver* driver, const unsigned char* music_data) {
   noTone(driver->output_pin);
+  //stopToneTask();
   driver->current_byte = 0;
   driver->current_bit = 0;
   driver->sample_counter = 0;
@@ -146,9 +148,6 @@ void play_buzzer_driver(BuzzerDriver* driver, const unsigned char* music_data) {
 }
 
 void tone_buzzer_driver(BuzzerDriver* driver, unsigned int frequency, unsigned long duration) {
-  if (driver->music_data) {
-    driver->music_data = NULL;
-  }
   tone(driver->output_pin, frequency, duration);
 }
 
@@ -272,7 +271,7 @@ void update_buzzer_driver(BuzzerDriver* driver) {
               break;
               
             case 3: // tempo
-              driver->tick_speed = driver->buffer3 << 4;
+              driver->tick_speed = driver->buffer3 << 5;
               driver->data_pointer[voice] += 2;
               break;
             
@@ -284,10 +283,6 @@ void update_buzzer_driver(BuzzerDriver* driver) {
             case 5:
               driver->data_pointer[voice] += 2;
               break;
-            
-            case 7:
-              stop_buzzer_driver(driver);
-              return;
 
             case 15:
               if (driver->pointer_location[voice] != 0) {
@@ -304,7 +299,7 @@ void update_buzzer_driver(BuzzerDriver* driver) {
 
         switch (driver->buffer1) {
           case 13: // octave
-            driver->octave[voice] = 1 << driver->buffer2;
+            driver->octave[voice] = 2 << driver->buffer2;
             driver->data_pointer[voice]++;
             goto LOOP;
             
@@ -349,5 +344,5 @@ void update_buzzer_driver(BuzzerDriver* driver) {
 }
 
 void stop_buzzer_driver(BuzzerDriver* driver) {
-  init_buzzer_driver(driver, driver->output_pin);
+  return;
 }

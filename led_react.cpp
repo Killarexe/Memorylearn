@@ -30,6 +30,8 @@ void led_react_update_play(MemoryLearn* memory_learn, LEDReact* game, unsigned l
     if (memory_learn->just_pressed_buttons & ~game->correct_button || game->accumulated_time > max_reaction_time) {
       game->state = LED_REACT_STATE_GAMEOVER;
       memory_learn->leds->clear();
+      memory_learn->lcd.setCursor(0, 1);
+      memory_learn->lcd.print("    Restart    ");
       tone_buzzer_driver(&memory_learn->buzzer, 220, 250);
     } else if (memory_learn->just_pressed_buttons & game->correct_button) {
       // Sinon le bon bouton appuyé, passer au prochain
@@ -62,8 +64,6 @@ void led_react_update_play(MemoryLearn* memory_learn, LEDReact* game, unsigned l
 void led_react_update_gameover(MemoryLearn* memory_learn, LEDReact* game, unsigned long delta_time) {
   memory_learn->lcd.setCursor(0, 0);
   memory_learn->lcd.print("=-=Game over=-=");
-  memory_learn->lcd.setCursor(0, 1);
-  memory_learn->lcd.print("    Restart    ");
   if (memory_learn->just_pressed_buttons & BUTTON_OK) {
     memory_learn->lcd.clear();
     game->level = 0;

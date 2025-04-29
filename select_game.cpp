@@ -54,6 +54,7 @@ void select_game_update(MemoryLearn* memory_learn) {
     }
     select_game_update_select(memory_learn);
   } else if (memory_learn->just_pressed_buttons & BUTTON_OK) {
+    noTone(memory_learn->buzzer.output_pin);
     memory_learn_set_state(memory_learn, STATES[memory_learn->select_game.cursor_index]);
   }
 }

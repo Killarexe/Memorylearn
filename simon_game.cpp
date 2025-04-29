@@ -132,6 +132,8 @@ void simon_game_update_play(MemoryLearn* memory_learn, SimonGame* game, unsigned
           memory_learn->leds->show();
           // Sinon game over
           memory_learn->just_pressed_buttons = 0;
+          memory_learn->lcd.setCursor(0, 1);
+          memory_learn->lcd.print("    Restart    ");
           game->state = SIMON_GAME_STATE_GAMEOVER;
           break;
         }
@@ -147,8 +149,6 @@ void simon_game_update_gameover(MemoryLearn* memory_learn, SimonGame* game, unsi
   // Affiche l'écran de gameover sur l'LCD et attend si le joueur veut rejouer ou non.
   memory_learn->lcd.setCursor(0, 0);
   memory_learn->lcd.print("=-=Game over=-=");
-  memory_learn->lcd.setCursor(0, 1);
-  memory_learn->lcd.print("    Restart    ");
   if (memory_learn->just_pressed_buttons & BUTTON_OK) {
     memory_learn->lcd.clear();
     game->level = 1;

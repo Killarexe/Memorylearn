@@ -9,7 +9,7 @@ void about_init(MemoryLearn* memory_learn) {
   memory_learn->lcd.setCursor(0, 1);
   memory_learn->lcd.print("MemoryLearn v1.0");
   memory_learn->about_menu.credits = 0;
-  play_buzzer_driver(&memory_learn->buzzer, LED_MUSIC);
+  play_buzzer_driver(&memory_learn->buzzer, MUSIC);
 }
 
 void update_credits(MemoryLearn* memory_learn) {

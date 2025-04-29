@@ -97,6 +97,7 @@ void memory_learn_boot(MemoryLearn* memory_learn) {
   delay(500);
   memory_learn->lcd.setCursor(0, 1);
   memory_learn->lcd.print("Press any button");
+  noTone(memory_learn->buzzer.output_pin);
   while (!memory_learn->just_pressed_buttons) {
     update_buttons(memory_learn);
   }

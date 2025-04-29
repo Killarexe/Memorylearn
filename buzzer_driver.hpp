@@ -73,7 +73,8 @@ typedef struct BuzzerDriver {
   unsigned int tick_counter;
   unsigned int tick_speed; //tempo
 
-  unsigned int output_pin;
+  unsigned char output_pin;
+  unsigned char needs_stop;
 
   const unsigned char* music_data;
 } BuzzerDriver;
